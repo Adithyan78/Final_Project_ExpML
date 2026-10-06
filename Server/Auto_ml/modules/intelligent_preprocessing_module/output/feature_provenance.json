@@ -1,0 +1,412 @@
+[
+  {
+    "output_feature": "age",
+    "source_column": "age",
+    "transformation": "standard_scale"
+  },
+  {
+    "output_feature": " workclass_ ?",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " workclass_ Federal-gov",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " workclass_ Local-gov",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " workclass_ Never-worked",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " workclass_ Private",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " workclass_ Self-emp-inc",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " workclass_ Self-emp-not-inc",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " workclass_ State-gov",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " workclass_ Without-pay",
+    "source_column": " workclass",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " fnlwgt",
+    "source_column": " fnlwgt",
+    "transformation": "standard_scale"
+  },
+  {
+    "output_feature": " education_ 10th",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ 11th",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ 12th",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ 1st-4th",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ 5th-6th",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ 7th-8th",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ 9th",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ Assoc-acdm",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ Assoc-voc",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ Bachelors",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ Doctorate",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ HS-grad",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ Masters",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ Preschool",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ Prof-school",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education_ Some-college",
+    "source_column": " education",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_1",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_2",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_3",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_4",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_5",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_6",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_7",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_8",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_9",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_10",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_11",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_12",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_13",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_14",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_15",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " education-num_16",
+    "source_column": " education-num",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " marital-status_ Divorced",
+    "source_column": " marital-status",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " marital-status_ Married-AF-spouse",
+    "source_column": " marital-status",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " marital-status_ Married-civ-spouse",
+    "source_column": " marital-status",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " marital-status_ Married-spouse-absent",
+    "source_column": " marital-status",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " marital-status_ Never-married",
+    "source_column": " marital-status",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " marital-status_ Separated",
+    "source_column": " marital-status",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " marital-status_ Widowed",
+    "source_column": " marital-status",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ ?",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Adm-clerical",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Armed-Forces",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Craft-repair",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Exec-managerial",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Farming-fishing",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Handlers-cleaners",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Machine-op-inspct",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Other-service",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Priv-house-serv",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Prof-specialty",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Protective-serv",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Sales",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Tech-support",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " occupation_ Transport-moving",
+    "source_column": " occupation",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " relationship_ Husband",
+    "source_column": " relationship",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " relationship_ Not-in-family",
+    "source_column": " relationship",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " relationship_ Other-relative",
+    "source_column": " relationship",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " relationship_ Own-child",
+    "source_column": " relationship",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " relationship_ Unmarried",
+    "source_column": " relationship",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " relationship_ Wife",
+    "source_column": " relationship",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " race_ Amer-Indian-Eskimo",
+    "source_column": " race",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " race_ Asian-Pac-Islander",
+    "source_column": " race",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " race_ Black",
+    "source_column": " race",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " race_ Other",
+    "source_column": " race",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " race_ White",
+    "source_column": " race",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " sex_ Female",
+    "source_column": " sex",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " sex_ Male",
+    "source_column": " sex",
+    "transformation": "one_hot"
+  },
+  {
+    "output_feature": " capital-gain",
+    "source_column": " capital-gain",
+    "transformation": "robust_scale"
+  },
+  {
+    "output_feature": " capital-loss",
+    "source_column": " capital-loss",
+    "transformation": "standard_scale"
+  },
+  {
+    "output_feature": " hours-per-week",
+    "source_column": " hours-per-week",
+    "transformation": "robust_scale"
+  },
+  {
+    "output_feature": " native-country_target_enc",
+    "source_column": " native-country",
+    "transformation": "target_encode"
+  }
+]

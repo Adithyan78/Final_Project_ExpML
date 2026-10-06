@@ -1,0 +1,343 @@
+{
+  "overview": {
+    "n_rows": 891,
+    "n_cols": 12,
+    "n_duplicate_rows": 0,
+    "categorical_columns": 9,
+    "numeric_columns": 3,
+    "datetime_columns": 0,
+    "text_columns": 0
+  },
+  "columns": {
+    "PassengerId": {
+      "dtype": "int64",
+      "inferred_type": "numeric",
+      "n_unique": 891,
+      "unique_ratio": 1.0,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "id_like": true,
+      "outlier_count": 0,
+      "outlier_pct": 0.0,
+      "skew": 0.0,
+      "q1": 223.5,
+      "q3": 668.5,
+      "lower_bound": -444.0,
+      "upper_bound": 1336.0,
+      "statistics_sampled": false,
+      "flags": [
+        "id_like"
+      ]
+    },
+    "Survived": {
+      "dtype": "int64",
+      "inferred_type": "categorical",
+      "n_unique": 2,
+      "unique_ratio": 0.0022,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.6162,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "flags": [
+        "target"
+      ]
+    },
+    "Pclass": {
+      "dtype": "int64",
+      "inferred_type": "categorical",
+      "n_unique": 3,
+      "unique_ratio": 0.0034,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.5511,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "flags": []
+    },
+    "Name": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 891,
+      "unique_ratio": 1.0,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0011,
+      "n_rare_categories": 891,
+      "rare_categories_sample": [
+        "Dooley, Mr. Patrick",
+        "Braund, Mr. Owen Harris",
+        "Cumings, Mrs. John Bradley (Florence Briggs Thayer)",
+        "Heikkinen, Miss. Laina",
+        "Futrelle, Mrs. Jacques Heath (Lily May Peel)",
+        "Allen, Mr. William Henry",
+        "Moran, Mr. James",
+        "McCarthy, Mr. Timothy J",
+        "Palsson, Master. Gosta Leonard",
+        "Johnson, Mrs. Oscar W (Elisabeth Vilhelmina Berg)"
+      ],
+      "id_like": true,
+      "flags": [
+        "id_like",
+        "891_rare_categories"
+      ]
+    },
+    "Sex": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 2,
+      "unique_ratio": 0.0022,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.6476,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "flags": []
+    },
+    "Age": {
+      "dtype": "float64",
+      "inferred_type": "numeric",
+      "n_unique": 88,
+      "unique_ratio": 0.0988,
+      "missing_count": 177,
+      "missing_pct": 19.8653,
+      "top_category_share": 0.0,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "outlier_count": 11,
+      "outlier_pct": 1.5406,
+      "skew": 0.3891,
+      "q1": 20.125,
+      "q3": 38.0,
+      "lower_bound": -6.6875,
+      "upper_bound": 64.8125,
+      "statistics_sampled": false,
+      "flags": [
+        "moderate_missing",
+        "has_outliers"
+      ]
+    },
+    "SibSp": {
+      "dtype": "int64",
+      "inferred_type": "categorical",
+      "n_unique": 7,
+      "unique_ratio": 0.0079,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.6824,
+      "n_rare_categories": 2,
+      "rare_categories_sample": [
+        8,
+        5
+      ],
+      "flags": [
+        "2_rare_categories"
+      ]
+    },
+    "Parch": {
+      "dtype": "int64",
+      "inferred_type": "categorical",
+      "n_unique": 7,
+      "unique_ratio": 0.0079,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.7609,
+      "n_rare_categories": 4,
+      "rare_categories_sample": [
+        5,
+        3,
+        4,
+        6
+      ],
+      "flags": [
+        "4_rare_categories"
+      ]
+    },
+    "Ticket": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 681,
+      "unique_ratio": 0.7643,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0079,
+      "n_rare_categories": 681,
+      "rare_categories_sample": [
+        "347082",
+        "1601",
+        "CA. 2343",
+        "3101295",
+        "CA 2144",
+        "347088",
+        "382652",
+        "S.O.C. 14879",
+        "113781",
+        "347077"
+      ],
+      "flags": [
+        "681_rare_categories"
+      ]
+    },
+    "Fare": {
+      "dtype": "float64",
+      "inferred_type": "numeric",
+      "n_unique": 248,
+      "unique_ratio": 0.2783,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "outlier_count": 116,
+      "outlier_pct": 13.0191,
+      "skew": 4.7873,
+      "q1": 7.9104,
+      "q3": 31.0,
+      "lower_bound": -26.724,
+      "upper_bound": 65.6344,
+      "statistics_sampled": false,
+      "flags": [
+        "high_outliers"
+      ]
+    },
+    "Cabin": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 147,
+      "unique_ratio": 0.165,
+      "missing_count": 687,
+      "missing_pct": 77.1044,
+      "top_category_share": 0.0196,
+      "n_rare_categories": 139,
+      "rare_categories_sample": [
+        "C83",
+        "C123",
+        "B28",
+        "D26",
+        "B58 B60",
+        "E33",
+        "D33",
+        "C52",
+        "F G73",
+        "B77"
+      ],
+      "flags": [
+        "high_missing",
+        "139_rare_categories"
+      ]
+    },
+    "Embarked": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 3,
+      "unique_ratio": 0.0034,
+      "missing_count": 2,
+      "missing_pct": 0.2245,
+      "top_category_share": 0.7244,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "flags": []
+    }
+  },
+  "target": {
+    "name": "Survived",
+    "class_balance": {
+      "0": 0.6162,
+      "1": 0.3838
+    },
+    "imbalance_flag": false
+  },
+  "numeric_correlations": [
+    {
+      "feature_1": "PassengerId",
+      "feature_2": "Age",
+      "correlation": 0.0368
+    },
+    {
+      "feature_1": "PassengerId",
+      "feature_2": "Fare",
+      "correlation": 0.0127
+    },
+    {
+      "feature_1": "Age",
+      "feature_2": "Fare",
+      "correlation": 0.0961
+    }
+  ],
+  "high_correlation_pairs": [],
+  "target_association": {
+    "PassengerId": {
+      "method": "correlation_ratio",
+      "score": 0.005,
+      "leakage_risk": false
+    },
+    "Pclass": {
+      "method": "cramers_v",
+      "score": 0.3367,
+      "leakage_risk": false
+    },
+    "Name": {
+      "method": "cramers_v",
+      "score": 0.0,
+      "leakage_risk": false
+    },
+    "Sex": {
+      "method": "cramers_v",
+      "score": 0.5426,
+      "leakage_risk": false
+    },
+    "Age": {
+      "method": "correlation_ratio",
+      "score": 0.0772,
+      "leakage_risk": false
+    },
+    "SibSp": {
+      "method": "cramers_v",
+      "score": 0.1874,
+      "leakage_risk": false
+    },
+    "Parch": {
+      "method": "cramers_v",
+      "score": 0.1569,
+      "leakage_risk": false
+    },
+    "Ticket": {
+      "method": "cramers_v",
+      "score": 0.3105,
+      "leakage_risk": false
+    },
+    "Fare": {
+      "method": "correlation_ratio",
+      "score": 0.2573,
+      "leakage_risk": false
+    },
+    "Cabin": {
+      "method": "cramers_v",
+      "score": 0.2675,
+      "leakage_risk": false
+    },
+    "Embarked": {
+      "method": "cramers_v",
+      "score": 0.1661,
+      "leakage_risk": false
+    }
+  },
+  "quality_flags": [
+    "PassengerId:id_like",
+    "Survived:target",
+    "Name:id_like",
+    "Name:891_rare_categories",
+    "Age:moderate_missing",
+    "Age:has_outliers",
+    "SibSp:2_rare_categories",
+    "Parch:4_rare_categories",
+    "Ticket:681_rare_categories",
+    "Fare:high_outliers",
+    "Cabin:high_missing",
+    "Cabin:139_rare_categories"
+  ],
+  "warnings": []
+}

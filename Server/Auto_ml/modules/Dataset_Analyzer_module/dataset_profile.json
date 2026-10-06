@@ -1,0 +1,436 @@
+{
+  "overview": {
+    "n_rows": 32561,
+    "n_cols": 15,
+    "n_duplicate_rows": 24,
+    "categorical_columns": 10,
+    "numeric_columns": 5,
+    "datetime_columns": 0,
+    "text_columns": 0
+  },
+  "columns": {
+    "age": {
+      "dtype": "int64",
+      "inferred_type": "numeric",
+      "n_unique": 73,
+      "unique_ratio": 0.0022,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "outlier_count": 143,
+      "outlier_pct": 0.4392,
+      "skew": 0.5587,
+      "q1": 28.0,
+      "q3": 48.0,
+      "lower_bound": -2.0,
+      "upper_bound": 78.0,
+      "statistics_sampled": false,
+      "flags": [
+        "has_outliers"
+      ]
+    },
+    " workclass": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 9,
+      "unique_ratio": 0.0003,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.697,
+      "n_rare_categories": 2,
+      "rare_categories_sample": [
+        " Without-pay",
+        " Never-worked"
+      ],
+      "flags": [
+        "2_rare_categories"
+      ]
+    },
+    " fnlwgt": {
+      "dtype": "int64",
+      "inferred_type": "numeric",
+      "n_unique": 21648,
+      "unique_ratio": 0.6648,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "outlier_count": 992,
+      "outlier_pct": 3.0466,
+      "skew": 1.447,
+      "q1": 117827.0,
+      "q3": 237051.0,
+      "lower_bound": -61009.0,
+      "upper_bound": 415887.0,
+      "statistics_sampled": false,
+      "flags": [
+        "has_outliers"
+      ]
+    },
+    " education": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 16,
+      "unique_ratio": 0.0005,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.3225,
+      "n_rare_categories": 2,
+      "rare_categories_sample": [
+        " 1st-4th",
+        " Preschool"
+      ],
+      "flags": [
+        "2_rare_categories"
+      ]
+    },
+    " education-num": {
+      "dtype": "int64",
+      "inferred_type": "categorical",
+      "n_unique": 16,
+      "unique_ratio": 0.0005,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.3225,
+      "n_rare_categories": 2,
+      "rare_categories_sample": [
+        2,
+        1
+      ],
+      "flags": [
+        "2_rare_categories"
+      ]
+    },
+    " marital-status": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 7,
+      "unique_ratio": 0.0002,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.4599,
+      "n_rare_categories": 1,
+      "rare_categories_sample": [
+        " Married-AF-spouse"
+      ],
+      "flags": [
+        "1_rare_categories"
+      ]
+    },
+    " occupation": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 15,
+      "unique_ratio": 0.0005,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.1271,
+      "n_rare_categories": 2,
+      "rare_categories_sample": [
+        " Priv-house-serv",
+        " Armed-Forces"
+      ],
+      "flags": [
+        "2_rare_categories"
+      ]
+    },
+    " relationship": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 6,
+      "unique_ratio": 0.0002,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.4052,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "flags": []
+    },
+    " race": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 5,
+      "unique_ratio": 0.0002,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.8543,
+      "n_rare_categories": 2,
+      "rare_categories_sample": [
+        " Amer-Indian-Eskimo",
+        " Other"
+      ],
+      "flags": [
+        "2_rare_categories"
+      ]
+    },
+    " sex": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 2,
+      "unique_ratio": 0.0001,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.6692,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "flags": []
+    },
+    " capital-gain": {
+      "dtype": "int64",
+      "inferred_type": "numeric",
+      "n_unique": 119,
+      "unique_ratio": 0.0037,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "outlier_count": 2712,
+      "outlier_pct": 8.329,
+      "skew": 11.9538,
+      "q1": 0.0,
+      "q3": 0.0,
+      "lower_bound": 0.0,
+      "upper_bound": 0.0,
+      "statistics_sampled": false,
+      "flags": [
+        "has_outliers"
+      ]
+    },
+    " capital-loss": {
+      "dtype": "int64",
+      "inferred_type": "numeric",
+      "n_unique": 92,
+      "unique_ratio": 0.0028,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "outlier_count": 1519,
+      "outlier_pct": 4.6651,
+      "skew": 4.5946,
+      "q1": 0.0,
+      "q3": 0.0,
+      "lower_bound": 0.0,
+      "upper_bound": 0.0,
+      "statistics_sampled": false,
+      "flags": [
+        "has_outliers"
+      ]
+    },
+    " hours-per-week": {
+      "dtype": "int64",
+      "inferred_type": "numeric",
+      "n_unique": 94,
+      "unique_ratio": 0.0029,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.0,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "outlier_count": 9008,
+      "outlier_pct": 27.665,
+      "skew": 0.2276,
+      "q1": 40.0,
+      "q3": 45.0,
+      "lower_bound": 32.5,
+      "upper_bound": 52.5,
+      "statistics_sampled": false,
+      "flags": [
+        "high_outliers"
+      ]
+    },
+    " native-country": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 42,
+      "unique_ratio": 0.0013,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.8959,
+      "n_rare_categories": 39,
+      "rare_categories_sample": [
+        " Philippines",
+        " Germany",
+        " Canada",
+        " Puerto-Rico",
+        " El-Salvador",
+        " India",
+        " Cuba",
+        " England",
+        " Jamaica",
+        " South"
+      ],
+      "flags": [
+        "39_rare_categories"
+      ]
+    },
+    "income": {
+      "dtype": "object",
+      "inferred_type": "categorical",
+      "n_unique": 2,
+      "unique_ratio": 0.0001,
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "top_category_share": 0.7592,
+      "n_rare_categories": 0,
+      "rare_categories_sample": [],
+      "flags": [
+        "target"
+      ]
+    }
+  },
+  "target": {
+    "name": "income",
+    "class_balance": {
+      " <=50K": 0.7592,
+      " >50K": 0.2408
+    },
+    "imbalance_flag": false
+  },
+  "numeric_correlations": [
+    {
+      "feature_1": "age",
+      "feature_2": " fnlwgt",
+      "correlation": -0.0766
+    },
+    {
+      "feature_1": "age",
+      "feature_2": " capital-gain",
+      "correlation": 0.0777
+    },
+    {
+      "feature_1": "age",
+      "feature_2": " capital-loss",
+      "correlation": 0.0578
+    },
+    {
+      "feature_1": "age",
+      "feature_2": " hours-per-week",
+      "correlation": 0.0688
+    },
+    {
+      "feature_1": " fnlwgt",
+      "feature_2": " capital-gain",
+      "correlation": 0.0004
+    },
+    {
+      "feature_1": " fnlwgt",
+      "feature_2": " capital-loss",
+      "correlation": -0.0103
+    },
+    {
+      "feature_1": " fnlwgt",
+      "feature_2": " hours-per-week",
+      "correlation": -0.0188
+    },
+    {
+      "feature_1": " capital-gain",
+      "feature_2": " capital-loss",
+      "correlation": -0.0316
+    },
+    {
+      "feature_1": " capital-gain",
+      "feature_2": " hours-per-week",
+      "correlation": 0.0784
+    },
+    {
+      "feature_1": " capital-loss",
+      "feature_2": " hours-per-week",
+      "correlation": 0.0543
+    }
+  ],
+  "high_correlation_pairs": [],
+  "target_association": {
+    "age": {
+      "method": "correlation_ratio",
+      "score": 0.234,
+      "leakage_risk": false
+    },
+    " workclass": {
+      "method": "cramers_v",
+      "score": 0.1785,
+      "leakage_risk": false
+    },
+    " fnlwgt": {
+      "method": "correlation_ratio",
+      "score": 0.0095,
+      "leakage_risk": false
+    },
+    " education": {
+      "method": "cramers_v",
+      "score": 0.3682,
+      "leakage_risk": false
+    },
+    " education-num": {
+      "method": "cramers_v",
+      "score": 0.3682,
+      "leakage_risk": false
+    },
+    " marital-status": {
+      "method": "cramers_v",
+      "score": 0.4472,
+      "leakage_risk": false
+    },
+    " occupation": {
+      "method": "cramers_v",
+      "score": 0.3513,
+      "leakage_risk": false
+    },
+    " relationship": {
+      "method": "cramers_v",
+      "score": 0.4534,
+      "leakage_risk": false
+    },
+    " race": {
+      "method": "cramers_v",
+      "score": 0.1002,
+      "leakage_risk": false
+    },
+    " sex": {
+      "method": "cramers_v",
+      "score": 0.2159,
+      "leakage_risk": false
+    },
+    " capital-gain": {
+      "method": "correlation_ratio",
+      "score": 0.2233,
+      "leakage_risk": false
+    },
+    " capital-loss": {
+      "method": "correlation_ratio",
+      "score": 0.1505,
+      "leakage_risk": false
+    },
+    " hours-per-week": {
+      "method": "correlation_ratio",
+      "score": 0.2297,
+      "leakage_risk": false
+    },
+    " native-country": {
+      "method": "cramers_v",
+      "score": 0.0921,
+      "leakage_risk": false
+    }
+  },
+  "quality_flags": [
+    "age:has_outliers",
+    " workclass:2_rare_categories",
+    " fnlwgt:has_outliers",
+    " education:2_rare_categories",
+    " education-num:2_rare_categories",
+    " marital-status:1_rare_categories",
+    " occupation:2_rare_categories",
+    " race:2_rare_categories",
+    " capital-gain:has_outliers",
+    " capital-loss:has_outliers",
+    " hours-per-week:high_outliers",
+    " native-country:39_rare_categories",
+    "income:target"
+  ],
+  "warnings": []
+}

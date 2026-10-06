@@ -1,0 +1,75 @@
+version: "1.0"
+
+rules:
+  # ---------------- missing stage ----------------
+  - id: id_like_drop
+    priority: 900
+    stage: missing
+    condition: "column.id_like == True"
+    action: "drop_column"
+    reason: "Column {col} looks like an identifier and carries no predictive signal."
+
+  - id: high_missing_drop
+    priority: 800
+    stage: missing
+    condition: "column.missing_pct > 60"
+    action: "drop_column"
+    reason: "Column {col} is missing in over 60% of rows."
+
+  - id: moderate_missing_numeric
+    priority: 700
+    stage: missing
+    condition: "column.type == 'numeric' and 5 < column.missing_pct <= 60"
+    action: "impute_median"
+    reason: "Column {col} has moderate missingness; median imputation is robust."
+
+  - id: moderate_missing_categorical
+    priority: 690
+    stage: missing
+    condition: "column.type == 'categorical' and 5 < column.missing_pct <= 60"
+    action: "impute_most_frequent"
+    reason: "Column {col} has moderate missingness; most-frequent imputation preserves category structure."
+
+  - id: low_missing_numeric
+    priority: 300
+    stage: missing
+    condition: "column.type == 'numeric' and 0 < column.missing_pct <= 5"
+    action: "impute_median"
+    reason: "Column {col} has a small amount of missingness; median imputation avoids dropping rows."
+
+  - id: low_missing_categorical
+    priority: 290
+    stage: missing
+    condition: "column.type == 'categorical' and 0 < column.missing_pct <= 5"
+    action: "impute_most_frequent"
+    reason: "Column {col} has a small amount of missingness; most-frequent imputation avoids dropping rows."
+
+  # ---------------- scaling stage ----------------
+  - id: high_outlier_robust_scale
+    priority: 650
+    stage: scaling
+    condition: "column.type == 'numeric' and column.outlier_pct > 5"
+    action: "robust_scale"
+    reason: "Column {col} has a high proportion of outliers; RobustScaler reduces their influence."
+
+  - id: default_numeric_scale
+    priority: 400
+    stage: scaling
+    condition: "column.type == 'numeric'"
+    action: "standard_scale"
+    reason: "Column {col} is numeric; standardizing puts it on a comparable scale for downstream models."
+
+  # ---------------- encoding stage ----------------
+  - id: high_cardinality
+    priority: 600
+    stage: encoding
+    condition: "column.type == 'categorical' and column.cardinality > 20"
+    action: "target_encode"
+    reason: "Column {col} has high cardinality; one-hot encoding it would explode dimensionality."
+
+  - id: categorical
+    priority: 500
+    stage: encoding
+    condition: "column.type == 'categorical'"
+    action: "one_hot"
+    reason: "Column {col} has manageable categorical cardinality."

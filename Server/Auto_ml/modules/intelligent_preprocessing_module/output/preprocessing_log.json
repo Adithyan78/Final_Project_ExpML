@@ -1,0 +1,226 @@
+[
+  {
+    "column": "age",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column 'age' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": "age",
+    "stage": "scaling",
+    "action": "standard_scale",
+    "reason": "Column age is numeric; standardizing puts it on a comparable scale for downstream models.",
+    "rule_id": "default_numeric_scale",
+    "source": "rule"
+  },
+  {
+    "column": " workclass",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' workclass' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " workclass",
+    "stage": "encoding",
+    "action": "one_hot",
+    "reason": "Column  workclass has manageable categorical cardinality.",
+    "rule_id": "categorical",
+    "source": "rule"
+  },
+  {
+    "column": " fnlwgt",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' fnlwgt' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " fnlwgt",
+    "stage": "scaling",
+    "action": "standard_scale",
+    "reason": "Column  fnlwgt is numeric; standardizing puts it on a comparable scale for downstream models.",
+    "rule_id": "default_numeric_scale",
+    "source": "rule"
+  },
+  {
+    "column": " education",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' education' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " education",
+    "stage": "encoding",
+    "action": "one_hot",
+    "reason": "Column  education has manageable categorical cardinality.",
+    "rule_id": "categorical",
+    "source": "rule"
+  },
+  {
+    "column": " education-num",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' education-num' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " education-num",
+    "stage": "encoding",
+    "action": "one_hot",
+    "reason": "Column  education-num has manageable categorical cardinality.",
+    "rule_id": "categorical",
+    "source": "rule"
+  },
+  {
+    "column": " marital-status",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' marital-status' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " marital-status",
+    "stage": "encoding",
+    "action": "one_hot",
+    "reason": "Column  marital-status has manageable categorical cardinality.",
+    "rule_id": "categorical",
+    "source": "rule"
+  },
+  {
+    "column": " occupation",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' occupation' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " occupation",
+    "stage": "encoding",
+    "action": "one_hot",
+    "reason": "Column  occupation has manageable categorical cardinality.",
+    "rule_id": "categorical",
+    "source": "rule"
+  },
+  {
+    "column": " relationship",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' relationship' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " relationship",
+    "stage": "encoding",
+    "action": "one_hot",
+    "reason": "Column  relationship has manageable categorical cardinality.",
+    "rule_id": "categorical",
+    "source": "rule"
+  },
+  {
+    "column": " race",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' race' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " race",
+    "stage": "encoding",
+    "action": "one_hot",
+    "reason": "Column  race has manageable categorical cardinality.",
+    "rule_id": "categorical",
+    "source": "rule"
+  },
+  {
+    "column": " sex",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' sex' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " sex",
+    "stage": "encoding",
+    "action": "one_hot",
+    "reason": "Column  sex has manageable categorical cardinality.",
+    "rule_id": "categorical",
+    "source": "rule"
+  },
+  {
+    "column": " capital-gain",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' capital-gain' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " capital-gain",
+    "stage": "scaling",
+    "action": "robust_scale",
+    "reason": "Column  capital-gain has a high proportion of outliers; RobustScaler reduces their influence.",
+    "rule_id": "high_outlier_robust_scale",
+    "source": "rule"
+  },
+  {
+    "column": " capital-loss",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' capital-loss' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " capital-loss",
+    "stage": "scaling",
+    "action": "standard_scale",
+    "reason": "Column  capital-loss is numeric; standardizing puts it on a comparable scale for downstream models.",
+    "rule_id": "default_numeric_scale",
+    "source": "rule"
+  },
+  {
+    "column": " hours-per-week",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' hours-per-week' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " hours-per-week",
+    "stage": "scaling",
+    "action": "robust_scale",
+    "reason": "Column  hours-per-week has a high proportion of outliers; RobustScaler reduces their influence.",
+    "rule_id": "high_outlier_robust_scale",
+    "source": "rule"
+  },
+  {
+    "column": " native-country",
+    "stage": "missing",
+    "action": "no_impute",
+    "reason": "No rule matched column ' native-country' at stage 'missing'; leaving it unchanged at this stage.",
+    "rule_id": null,
+    "source": "default"
+  },
+  {
+    "column": " native-country",
+    "stage": "encoding",
+    "action": "target_encode",
+    "reason": "Column  native-country has high cardinality; one-hot encoding it would explode dimensionality.",
+    "rule_id": "high_cardinality",
+    "source": "rule"
+  }
+]
