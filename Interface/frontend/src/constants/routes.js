@@ -1,13 +1,14 @@
+
 export const ROUTES = {
   HOME: "/",
   LOGIN: "/login",
   SIGNUP: "/signup",
   DASHBOARD: "/dashboard",
   UPLOAD: "/upload",
-  TRAINING: "/experiment/training",
-  COMPARISON: "/experiment/comparison",
-  EXPLAINABILITY: "/experiment/explainability",
-  CHAT: "/experiment/chat",
+  TRAINING: "/training",
+  COMPARISON: "/models",
+  EXPLAINABILITY: "/explainability",
+  CHAT: "/chat",
   HISTORY: "/history",
 };
 

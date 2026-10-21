@@ -98,7 +98,7 @@ export default function Sidebar({ onNavigate }) {
             M
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-ink truncate">Manu</p>
+            <p className="text-xs font-medium text-ink truncate">Demo</p>
             <p className="text-[11px] text-ink-muted truncate">Personal workspace</p>
           </div>
         </div>

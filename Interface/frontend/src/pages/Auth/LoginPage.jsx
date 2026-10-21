@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Boxes, Database, Cpu, Lightbulb } from "lucide-react";
 import { ROUTES } from "../../constants/routes";
 import Button from "../../components/common/Button";
+import { login } from "../../services/auth";
 
 const POINTS = [
   { icon: Database, text: "Profile any tabular CSV in seconds" },
@@ -13,11 +15,22 @@ const POINTS = [
 export default function LoginPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // No backend yet — route straight to the dashboard.
-    navigate(ROUTES.DASHBOARD);
+    setError("");
+    setLoading(true);
+
+    try {
+      await login(form);
+      navigate(ROUTES.DASHBOARD, { replace: true });
+    } catch (err) {
+      setError(err.message || "Unable to sign in. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -112,8 +125,20 @@ export default function LoginPage() {
                 className="w-full text-sm px-3.5 py-2.5 rounded-lg border border-surface-border bg-white text-ink placeholder:text-ink-muted outline-none focus:border-orange focus:ring-1 focus:ring-orange transition-default"
               />
             </div>
-            <Button type="submit" className="w-full" size="lg">
-              Sign In
+
+            {error && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
 

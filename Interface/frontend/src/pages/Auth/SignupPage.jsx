@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Boxes } from "lucide-react";
 import { ROUTES } from "../../constants/routes";
 import Button from "../../components/common/Button";
+import { signup } from "../../services/auth";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -12,10 +14,33 @@ export default function SignupPage() {
     password: "",
     confirm: "",
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate(ROUTES.DASHBOARD);
+    setError("");
+
+    if (form.password !== form.confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await signup(form);
+      navigate(ROUTES.DASHBOARD, { replace: true });
+    } catch (err) {
+      setError(err.message || "Unable to create your account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const field = (key, label, type = "text", placeholder = "") => (
@@ -26,6 +51,8 @@ export default function SignupPage() {
       <input
         type={type}
         required
+        minLength={key === "password" ? 8 : undefined}
+        maxLength={key === "password" || key === "confirm" ? 128 : undefined}
         value={form[key]}
         onChange={(e) => setForm({ ...form, [key]: e.target.value })}
         placeholder={placeholder}
@@ -63,8 +90,20 @@ export default function SignupPage() {
             {field("email", "Email", "email", "you@company.com")}
             {field("password", "Password", "password", "••••••••")}
             {field("confirm", "Confirm Password", "password", "••••••••")}
-            <Button type="submit" className="w-full" size="lg">
-              Create Account
+
+            {error && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
         </div>
