@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import config
 from .auth import router as auth_router
+from .datasets import router as datasets_router
+from .dashboard import router as dashboard_router
 from .database import connect_db, close_db
 
 
@@ -21,7 +23,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="AutoExplainAI API",
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
@@ -29,11 +31,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[config.FRONTEND_ORIGIN],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
 
 app.include_router(auth_router)
+app.include_router(datasets_router, prefix="/datasets")
+app.include_router(dashboard_router)
 
 
 @app.get("/")
