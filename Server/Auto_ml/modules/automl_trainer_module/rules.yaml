@@ -1,0 +1,106 @@
+# Model-selection knowledge base.
+#
+# Each rule fires when its `when` condition matches the dataset context (built from the Dataset
+# Analyzer profile + preprocessing provenance). Fired rules add `points` to each model; the points
+# and reasons are stored as that model's "why this algorithm" explanation.
+#
+# Points are PRIORS: they decide which models are tried and in what order. The winner is always
+# decided by measured cross-validation score, never by these points.
+#
+# Condition syntax:  {all: [...]}  /  {any: [...]}  /  a single {metric, op, value}
+# Available metrics: n_rows, n_features, feature_row_ratio, n_classes, minority_share, imbalanced,
+#   binary_share, onehot_share, has_categorical_source, has_numeric_source, has_target_encoded,
+#   max_abs_num_corr, max_target_association, mean_target_association, outlier_heavy, highly_skewed
+version: 2
+
+rules:
+  - id: small_dataset
+    when: {metric: n_rows, op: "<", value: 5000}
+    points: {LogisticRegression: 2, Ridge: 2, ElasticNet: 1, SVC: 1, SVR: 1, KNN: 0.5, GaussianNB: 0.5,
+             RandomForest: 0.5, ExtraTrees: 0.5, GradientBoosting: 0.5, XGBoost: -0.5, LightGBM: -0.5}
+    reason: "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit."
+
+  - id: medium_dataset
+    when:
+      all:
+        - {metric: n_rows, op: ">=", value: 5000}
+        - {metric: n_rows, op: "<=", value: 100000}
+    points: {RandomForest: 1, ExtraTrees: 1, HistGradientBoosting: 1.5, GradientBoosting: 0.5, XGBoost: 1, LightGBM: 1}
+    reason: "Medium dataset (5k-100k rows): tree ensembles have enough data to learn from."
+
+  - id: large_dataset
+    when: {metric: n_rows, op: ">", value: 100000}
+    points: {HistGradientBoosting: 2, LightGBM: 2, XGBoost: 2, LogisticRegression: 0.5, Ridge: 0.5}
+    reason: "Large dataset (>100k rows): histogram/gradient boosting scales best."
+
+  - id: high_dimensional
+    when:
+      any:
+        - {metric: n_features, op: ">", value: 50}
+        - {metric: feature_row_ratio, op: ">", value: 0.1}
+    points: {LogisticRegression: 1.5, Ridge: 1.5, ElasticNet: 1, KNN: -1, RandomForest: -0.5}
+    reason: "Many features relative to rows: regularized linear models are safer; distance models suffer."
+
+  - id: low_dimensional
+    when: {metric: n_features, op: "<=", value: 10}
+    points: {KNN: 0.5, SVC: 0.5, SVR: 0.5}
+    reason: "Few features: distance/kernel methods work well."
+
+  - id: mostly_onehot_features
+    when: {metric: onehot_share, op: ">=", value: 0.7}
+    points: {RandomForest: 1, ExtraTrees: 1, DecisionTree: 0.5, GradientBoosting: 1,
+             HistGradientBoosting: 1, XGBoost: 1, LightGBM: 1}
+    reason: "Mostly one-hot/binary inputs: tree models split on them directly and capture interactions."
+
+  - id: mixed_types
+    when:
+      all:
+        - {metric: has_categorical_source, op: "==", value: true}
+        - {metric: has_numeric_source, op: "==", value: true}
+    points: {RandomForest: 1, HistGradientBoosting: 1, GradientBoosting: 0.5, SVC: -0.5, KNN: -0.5}
+    reason: "Mixed categorical/numeric source columns: tree ensembles handle both without extra work."
+
+  - id: class_imbalance
+    when: {metric: imbalanced, op: "==", value: true}
+    points: {RandomForest: 1, XGBoost: 1, LightGBM: 1, HistGradientBoosting: 0.5, LogisticRegression: 0.5, GaussianNB: -0.5}
+    reason: "Class imbalance flagged by the analyzer: these models support class weighting."
+
+  - id: weak_linear_structure
+    when:
+      all:
+        - {metric: max_abs_num_corr, op: "<", value: 0.3}
+        - {metric: n_rows, op: ">=", value: 500}
+    points: {RandomForest: 0.5, HistGradientBoosting: 0.5, GradientBoosting: 0.5, LogisticRegression: -0.5}
+    reason: "Weak linear correlation between numeric features: favor non-linear models."
+
+  - id: outlier_heavy
+    when: {metric: outlier_heavy, op: "==", value: true}
+    points: {RandomForest: 0.5, ExtraTrees: 0.5, GradientBoosting: 0.5, HistGradientBoosting: 0.5, KNN: -0.5, SVC: -0.5}
+    reason: "Analyzer found columns with >10% outliers: tree models are insensitive to them."
+
+  - id: dominant_signal
+    when: {metric: max_target_association, op: ">=", value: 0.5}
+    points: {LogisticRegression: 0.5, DecisionTree: 0.5}
+    reason: "One feature strongly associated with the target (analyzer): simple models capture most of the signal."
+
+  - id: weak_signal
+    when: {metric: max_target_association, op: "<", value: 0.15}
+    points: {RandomForest: 0.5, ExtraTrees: 0.5, Ridge: 0.5, LogisticRegression: 0.5}
+    reason: "No feature strongly associated with the target: favor regularized/averaging models over high-variance ones."
+
+exclusions:
+  - model: SVC
+    when: {metric: n_rows, op: ">", value: 20000}
+    reason: "Kernel SVM scales ~O(n^2); too slow above 20k rows."
+  - model: SVR
+    when: {metric: n_rows, op: ">", value: 20000}
+    reason: "Kernel SVM scales ~O(n^2); too slow above 20k rows."
+  - model: KNN
+    when:
+      any:
+        - {metric: n_rows, op: ">", value: 100000}
+        - {metric: n_features, op: ">", value: 200}
+    reason: "KNN is too slow/ineffective at this size or dimensionality."
+  - model: GradientBoosting
+    when: {metric: n_rows, op: ">", value: 100000}
+    reason: "sklearn GradientBoosting is slow above 100k rows (HistGradientBoosting covers it)."

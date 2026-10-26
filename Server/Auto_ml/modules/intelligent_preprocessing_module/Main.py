@@ -78,6 +78,16 @@ def run_preprocessing(
         index=False,
     )
 
+       
+
+    # Save targets, row-aligned with the processed feature files
+    assert len(y_train) == len(train_processed), "y_train / train_processed row mismatch"
+    assert len(y_test) == len(test_processed), "y_test / test_processed row mismatch"
+    y_train.to_frame(target_column).to_csv(output_dir / "y_train.csv", index=False)
+    y_test.to_frame(target_column).to_csv(output_dir / "y_test.csv", index=False)
+
+    # Save preprocessing log
+
     # Save preprocessing log
     with open(
         output_dir / "preprocessing_log.json",
@@ -131,6 +141,8 @@ def run_preprocessing(
             "preprocessing_log.json",
             "feature_provenance.json",
             "preprocessing_summary.json",
+            "y_train.csv",
+            "y_test.csv",
         ],
     }
 

@@ -110,6 +110,21 @@ rules:
         load_ruleset(bad)
 
 
+def test_boolean_priority_rejected():
+    bad = """
+version: "1.0"
+rules:
+  - id: r1
+    priority: true
+    stage: missing
+    condition: "column.missing_pct > 1"
+    action: drop_column
+    reason: "x"
+"""
+    with pytest.raises(RuleValidationError):
+        load_ruleset(bad)
+
+
 def test_unknown_action_rejected_when_registry_supplied():
     bad = """
 version: "1.0"

@@ -1,0 +1,94 @@
+{
+  "task": "classification",
+  "primary_metric": "accuracy",
+  "secondary_metric": "f1",
+  "best_model": "SoftVotingEnsemble",
+  "best_params": {},
+  "best_tuned": false,
+  "best_members": [
+    "HistGradientBoosting",
+    "LogisticRegression",
+    "GradientBoosting"
+  ],
+  "best_cv_score": 0.8308,
+  "best_cv_std": 0.0363,
+  "best_test_metrics": {
+    "accuracy": 0.8117,
+    "balanced_accuracy": 0.7818,
+    "precision": 0.813,
+    "recall": 0.8117,
+    "f1": 0.8065,
+    "roc_auc": 0.8339
+  },
+  "baseline_cv_score": 0.6168,
+  "n_train": 668,
+  "n_test": 223,
+  "n_features": 18,
+  "models_screened": 10,
+  "models_finalists": 5,
+  "models_tuned": 0,
+  "rungs": [
+    {
+      "rung": 0,
+      "rows": 668,
+      "folds": 5,
+      "evaluated": [
+        "RandomForest",
+        "GradientBoosting",
+        "HistGradientBoosting",
+        "LogisticRegression",
+        "ExtraTrees",
+        "DecisionTree",
+        "GaussianNB",
+        "SVC",
+        "AdaBoost",
+        "KNN"
+      ],
+      "kept": [
+        "SVC",
+        "GradientBoosting",
+        "LogisticRegression",
+        "HistGradientBoosting",
+        "AdaBoost"
+      ]
+    }
+  ],
+  "refit_on_train_and_test": false,
+  "warnings": [
+    "SoftVotingEnsemble and HistGradientBoosting are within one CV standard deviation; their ranking is not statistically meaningful."
+  ],
+  "failures": {},
+  "total_time_s": 34.29,
+  "created_at": "2026-10-26T06:19:57.827122+00:00",
+  "environment": {
+    "python": "3.10.10",
+    "sklearn": "1.7.2",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3"
+  },
+  "config": {
+    "task": "auto",
+    "primary_metric": null,
+    "cv_splits": 5,
+    "cv_repeats": 1,
+    "random_state": 42,
+    "n_jobs": -1,
+    "max_candidates": 10,
+    "exclude": [],
+    "include_only": [],
+    "rules_path": null,
+    "screening_max_rows": 5000,
+    "screening_folds": 3,
+    "keep_fraction": 0.5,
+    "keep_min": 3,
+    "time_budget_s": null,
+    "tune": false,
+    "tune_top_n": 3,
+    "tune_iterations": 30,
+    "ensemble": true,
+    "ensemble_top_k": 3,
+    "ensemble_min_gain": 0.005,
+    "refit_on_all": false,
+    "overfit_gap_warn": 0.1
+  }
+}

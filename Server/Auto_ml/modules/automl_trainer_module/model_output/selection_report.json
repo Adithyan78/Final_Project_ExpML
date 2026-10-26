@@ -1,0 +1,290 @@
+{
+  "context": {
+    "task": "classification",
+    "n_rows": 668,
+    "n_features": 18,
+    "feature_row_ratio": 0.0269,
+    "n_classes": 2,
+    "minority_share": 0.3832,
+    "imbalanced": false,
+    "binary_share": 0.8889,
+    "onehot_share": 0.8889,
+    "has_categorical_source": true,
+    "has_numeric_source": true,
+    "has_target_encoded": false,
+    "n_source_columns": 7,
+    "max_abs_num_corr": 0.0861,
+    "max_target_association": 0.5426,
+    "mean_target_association": 0.2463,
+    "outlier_heavy": true,
+    "highly_skewed": true,
+    "used_profile": true,
+    "used_provenance": true
+  },
+  "rules_version": 2,
+  "shortlist": [
+    "RandomForest",
+    "GradientBoosting",
+    "HistGradientBoosting",
+    "LogisticRegression",
+    "ExtraTrees",
+    "DecisionTree",
+    "GaussianNB",
+    "SVC",
+    "AdaBoost",
+    "KNN"
+  ],
+  "excluded": {
+    "XGBoost": "Optional dependency 'xgboost' is not installed.",
+    "LightGBM": "Optional dependency 'lightgbm' is not installed."
+  },
+  "scores": {
+    "LogisticRegression": {
+      "score": 2.0,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (+2)",
+        "Weak linear correlation between numeric features: favor non-linear models. (-0.5)",
+        "One feature strongly associated with the target (analyzer): simple models capture most of the signal. (+0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": 2
+        },
+        {
+          "rule_id": "weak_linear_structure",
+          "points": -0.5
+        },
+        {
+          "rule_id": "dominant_signal",
+          "points": 0.5
+        }
+      ]
+    },
+    "KNN": {
+      "score": -0.5,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (+0.5)",
+        "Mixed categorical/numeric source columns: tree ensembles handle both without extra work. (-0.5)",
+        "Analyzer found columns with >10% outliers: tree models are insensitive to them. (-0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": 0.5
+        },
+        {
+          "rule_id": "mixed_types",
+          "points": -0.5
+        },
+        {
+          "rule_id": "outlier_heavy",
+          "points": -0.5
+        }
+      ]
+    },
+    "GaussianNB": {
+      "score": 0.5,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (+0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": 0.5
+        }
+      ]
+    },
+    "SVC": {
+      "score": 0.0,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (+1)",
+        "Mixed categorical/numeric source columns: tree ensembles handle both without extra work. (-0.5)",
+        "Analyzer found columns with >10% outliers: tree models are insensitive to them. (-0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": 1
+        },
+        {
+          "rule_id": "mixed_types",
+          "points": -0.5
+        },
+        {
+          "rule_id": "outlier_heavy",
+          "points": -0.5
+        }
+      ]
+    },
+    "DecisionTree": {
+      "score": 1.0,
+      "reasons": [
+        "Mostly one-hot/binary inputs: tree models split on them directly and capture interactions. (+0.5)",
+        "One feature strongly associated with the target (analyzer): simple models capture most of the signal. (+0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "mostly_onehot_features",
+          "points": 0.5
+        },
+        {
+          "rule_id": "dominant_signal",
+          "points": 0.5
+        }
+      ]
+    },
+    "RandomForest": {
+      "score": 3.5,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (+0.5)",
+        "Mostly one-hot/binary inputs: tree models split on them directly and capture interactions. (+1)",
+        "Mixed categorical/numeric source columns: tree ensembles handle both without extra work. (+1)",
+        "Weak linear correlation between numeric features: favor non-linear models. (+0.5)",
+        "Analyzer found columns with >10% outliers: tree models are insensitive to them. (+0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": 0.5
+        },
+        {
+          "rule_id": "mostly_onehot_features",
+          "points": 1
+        },
+        {
+          "rule_id": "mixed_types",
+          "points": 1
+        },
+        {
+          "rule_id": "weak_linear_structure",
+          "points": 0.5
+        },
+        {
+          "rule_id": "outlier_heavy",
+          "points": 0.5
+        }
+      ]
+    },
+    "ExtraTrees": {
+      "score": 2.0,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (+0.5)",
+        "Mostly one-hot/binary inputs: tree models split on them directly and capture interactions. (+1)",
+        "Analyzer found columns with >10% outliers: tree models are insensitive to them. (+0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": 0.5
+        },
+        {
+          "rule_id": "mostly_onehot_features",
+          "points": 1
+        },
+        {
+          "rule_id": "outlier_heavy",
+          "points": 0.5
+        }
+      ]
+    },
+    "GradientBoosting": {
+      "score": 3.0,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (+0.5)",
+        "Mostly one-hot/binary inputs: tree models split on them directly and capture interactions. (+1)",
+        "Mixed categorical/numeric source columns: tree ensembles handle both without extra work. (+0.5)",
+        "Weak linear correlation between numeric features: favor non-linear models. (+0.5)",
+        "Analyzer found columns with >10% outliers: tree models are insensitive to them. (+0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": 0.5
+        },
+        {
+          "rule_id": "mostly_onehot_features",
+          "points": 1
+        },
+        {
+          "rule_id": "mixed_types",
+          "points": 0.5
+        },
+        {
+          "rule_id": "weak_linear_structure",
+          "points": 0.5
+        },
+        {
+          "rule_id": "outlier_heavy",
+          "points": 0.5
+        }
+      ]
+    },
+    "HistGradientBoosting": {
+      "score": 3.0,
+      "reasons": [
+        "Mostly one-hot/binary inputs: tree models split on them directly and capture interactions. (+1)",
+        "Mixed categorical/numeric source columns: tree ensembles handle both without extra work. (+1)",
+        "Weak linear correlation between numeric features: favor non-linear models. (+0.5)",
+        "Analyzer found columns with >10% outliers: tree models are insensitive to them. (+0.5)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "mostly_onehot_features",
+          "points": 1
+        },
+        {
+          "rule_id": "mixed_types",
+          "points": 1
+        },
+        {
+          "rule_id": "weak_linear_structure",
+          "points": 0.5
+        },
+        {
+          "rule_id": "outlier_heavy",
+          "points": 0.5
+        }
+      ]
+    },
+    "AdaBoost": {
+      "score": 0.0,
+      "reasons": [],
+      "breakdown": []
+    },
+    "XGBoost": {
+      "score": 0.5,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (-0.5)",
+        "Mostly one-hot/binary inputs: tree models split on them directly and capture interactions. (+1)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": -0.5
+        },
+        {
+          "rule_id": "mostly_onehot_features",
+          "points": 1
+        }
+      ]
+    },
+    "LightGBM": {
+      "score": 0.5,
+      "reasons": [
+        "Small dataset (<5k rows): simple/low-variance models generalize well; large boosters overfit. (-0.5)",
+        "Mostly one-hot/binary inputs: tree models split on them directly and capture interactions. (+1)"
+      ],
+      "breakdown": [
+        {
+          "rule_id": "small_dataset",
+          "points": -0.5
+        },
+        {
+          "rule_id": "mostly_onehot_features",
+          "points": 1
+        }
+      ]
+    }
+  }
+}

@@ -111,6 +111,7 @@ def validate_and_build_ruleset(
         _require(rule_id not in seen_ids, f"Duplicate rule id {rule_id!r}.")
         seen_ids.add(rule_id)
 
+        priority = raw_rule["priority"]
         _require(
             isinstance(raw_rule["priority"], int),
             f"Rule {rule_id!r}: 'priority' must be an integer.",
