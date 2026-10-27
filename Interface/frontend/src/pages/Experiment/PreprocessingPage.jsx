@@ -46,6 +46,7 @@ export default function PreprocessingPage() {
   const [activeReport, setActiveReport] = useState("preprocessing_summary.json");
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsError, setReportsError] = useState("");
+  const [insightTab, setInsightTab] = useState("overview");
 
   const columns = Object.keys(profile?.columns ?? {});
   const preprocessingLogs = Array.isArray(result?.preprocessing_log)
@@ -468,6 +469,107 @@ export default function PreprocessingPage() {
                 </Card>
               ))}
             </div>
+
+            <Card>
+              <div className="space-y-5 p-5">
+                <div>
+                  <h3 className="text-lg font-semibold text-ink">Preprocessing insights</h3>
+                  <p className="mt-1 text-sm text-ink-secondary">A visual explanation of the transformations and outputs for this run.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    ["overview", "Overview"],
+                    ["features", "Features"],
+                    ["pipeline", "Pipeline"],
+                  ].map(([key, label]) => (
+                    <button key={key} type="button" onClick={() => setInsightTab(key)}
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${insightTab === key ? "border-orange bg-orange-50 text-orange" : "border-surface-border bg-white text-ink-secondary hover:bg-surface-page"}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {insightTab === "overview" && (
+                  <div className="space-y-5">
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-xl border border-surface-border p-4">
+                        <p className="text-sm text-ink-secondary">Input dataset</p>
+                        <p className="mt-2 text-2xl font-semibold text-ink">{profile?.row_count ?? profile?.rows ?? "—"}</p>
+                        <p className="text-xs text-ink-muted">Rows reported by the dataset profile</p>
+                      </div>
+                      <div className="rounded-xl border border-surface-border p-4">
+                        <p className="text-sm text-ink-secondary">Output features</p>
+                        <p className="mt-2 text-2xl font-semibold text-ink">{result.feature_count ?? result.selected_features?.length ?? 0}</p>
+                        <p className="text-xs text-ink-muted">Features available for model training</p>
+                      </div>
+                      <div className="rounded-xl border border-surface-border p-4">
+                        <p className="text-sm text-ink-secondary">Logged transformations</p>
+                        <p className="mt-2 text-2xl font-semibold text-ink">{preprocessingLogs.length}</p>
+                        <p className="text-xs text-ink-muted">Recorded preprocessing events</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-5 lg:grid-cols-2">
+                      <div className="rounded-xl border border-surface-border p-4">
+                        <h4 className="font-medium text-ink">Train/test split</h4>
+                        <div className="mt-4 flex h-4 overflow-hidden rounded-full bg-surface-page" aria-label="Train and test row distribution">
+                          <div className="bg-orange" style={{ width: `${(Number(result.train_rows || 0) / Math.max(1, Number(result.train_rows || 0) + Number(result.test_rows || 0))) * 100}%` }} />
+                          <div className="bg-slate-300" style={{ width: `${(Number(result.test_rows || 0) / Math.max(1, Number(result.train_rows || 0) + Number(result.test_rows || 0))) * 100}%` }} />
+                        </div>
+                        <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
+                          <span className="text-ink"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-orange" />Training: {result.train_rows ?? 0} rows</span>
+                          <span className="text-ink-secondary"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-slate-300" />Testing: {result.test_rows ?? 0} rows</span>
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-surface-border p-4">
+                        <h4 className="font-medium text-ink">Transformation activity</h4>
+                        {[ ["Dropped", logSummary.dropped], ["Imputed", logSummary.imputed], ["Encoded", logSummary.encoded], ["Scaled", logSummary.scaled] ].map(([label, count]) => {
+                          const maxCount = Math.max(1, logSummary.dropped, logSummary.imputed, logSummary.encoded, logSummary.scaled);
+                          return <div key={label} className="mt-3 grid grid-cols-[88px_1fr_28px] items-center gap-2 text-sm">
+                            <span className="text-ink-secondary">{label}</span>
+                            <div className="h-2.5 overflow-hidden rounded-full bg-surface-page"><div className="h-full rounded-full bg-orange" style={{ width: `${(count / maxCount) * 100}%` }} /></div>
+                            <span className="text-right font-medium text-ink">{count}</span>
+                          </div>;
+                        })}
+                        <p className="mt-3 text-xs text-ink-muted">Counts reflect logged actions; one column may have multiple events.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {insightTab === "features" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-ink-secondary">These are the features returned by the preprocessing run. Ranking scores are shown only when available in the saved results.</p>
+                    {result.selected_features?.length ? (
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {result.selected_features.map((feature) => (
+                          <div key={feature} className="flex items-center gap-2 rounded-lg border border-surface-border bg-surface-page px-3 py-2 text-sm text-ink">
+                            <CheckCircle2 size={15} className="shrink-0 text-emerald-600" />
+                            <span className="break-all">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="text-sm text-ink-secondary">No selected features were returned for this run.</p>}
+                  </div>
+                )}
+
+                {insightTab === "pipeline" && (
+                  <div className="space-y-3">
+                    {[
+                      ["1", "Inspect dataset", "Review the input columns and selected target."],
+                      ["2", "Handle missing values", `${logSummary.imputed} imputation actions recorded.`],
+                      ["3", "Transform features", `${logSummary.encoded} encoding and ${logSummary.scaled} scaling actions recorded.`],
+                      ["4", "Prepare model splits", `${result.train_rows ?? 0} training rows and ${result.test_rows ?? 0} testing rows created.`],
+                    ].map(([step, title, description], index) => (
+                      <div key={step} className="flex gap-3 rounded-xl border border-surface-border p-4">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-sm font-semibold text-orange">{step}</div>
+                        <div className="min-w-0"><p className="font-medium text-ink">{title}</p><p className="mt-1 text-sm text-ink-secondary">{description}</p></div>
+                      </div>
+                    ))}
+                    <p className="text-xs text-ink-muted">For the exact per-column reasons and rules, expand the detailed preprocessing log below.</p>
+                  </div>
+                )}
+              </div>
+            </Card>
 
             <Card>
               <div className="space-y-4 p-5">
