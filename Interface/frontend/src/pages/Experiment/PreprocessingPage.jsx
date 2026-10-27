@@ -16,6 +16,7 @@ import AppShell from "../../components/layout/AppShell";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import { getDatasets, getDataset } from "../../services/datasets";
+import request, { BASE_URL } from "../../services/api";
 import {
   preprocessDataset,
   getPreprocessingRuns,
@@ -41,6 +42,10 @@ export default function PreprocessingPage() {
   const [logSearch, setLogSearch] = useState("");
   const [logFilter, setLogFilter] = useState("All");
   const [expandedLogs, setExpandedLogs] = useState({});
+  const [reports, setReports] = useState({});
+  const [activeReport, setActiveReport] = useState("preprocessing_summary.json");
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState("");
 
   const columns = Object.keys(profile?.columns ?? {});
   const preprocessingLogs = Array.isArray(result?.preprocessing_log)
@@ -122,6 +127,8 @@ export default function PreprocessingPage() {
   const loadDataset = useCallback(async (id) => {
     setProfile(null);
     setResult(null);
+    setReports({});
+    setReportsError("");
     setTarget("");
     setError("");
     setNotice("");
@@ -200,6 +207,68 @@ export default function PreprocessingPage() {
     await loadDataset(id);
   }
 
+  async function loadReports(runId) {
+    if (!runId) {
+      setReports({});
+      return;
+    }
+
+    setReportsLoading(true);
+    setReportsError("");
+    try {
+      const data = await request(
+        `/preprocessing/runs/${encodeURIComponent(runId)}/reports`
+      );
+      setReports(data?.reports ?? {});
+      const names = Object.keys(data?.reports ?? {});
+      if (names.length && !names.includes(activeReport)) {
+        setActiveReport(names[0]);
+      }
+    } catch (err) {
+      setReports({});
+      setReportsError(
+        err.message || "Could not load JSON reports for this run."
+      );
+    } finally {
+      setReportsLoading(false);
+    }
+  }
+
+  async function handleDownloadReport(filename) {
+    if (!result?.run_id || !filename) return;
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${BASE_URL}/preprocessing/runs/${encodeURIComponent(result.run_id)}/reports/${encodeURIComponent(filename)}`,
+        { credentials: "include" }
+      );
+
+      if (!response.ok) {
+        let message = `Download failed (${response.status})`;
+        try {
+          const data = await response.json();
+          if (typeof data.detail === "string") message = data.detail;
+        } catch {
+          // Keep the HTTP status message if the response isn't JSON.
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || "Could not download the JSON report.");
+    }
+  }
+
   async function handlePreprocess() {
     if (!datasetId) {
       setError("Choose a dataset first.");
@@ -223,7 +292,7 @@ export default function PreprocessingPage() {
       });
 
       setResult(response);
-      await loadRuns(datasetId);
+      await Promise.all([loadReports(response.run_id), loadRuns(datasetId)]);
       setNotice("Preprocessing completed. Your CSV artifacts are ready.");
     } catch (err) {
       setError(err.message || "Preprocessing failed.");
@@ -435,6 +504,80 @@ export default function PreprocessingPage() {
                     Download testing CSV
                   </Button>
                 </div>
+              </div>
+            </Card>
+
+            <Card>
+              <div className="space-y-5 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="font-semibold text-ink">JSON reports</h3>
+                    <p className="mt-1 text-sm text-ink-secondary">
+                      Inspect and download the JSON artifacts saved for this run.
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => loadReports(result.run_id)}
+                    disabled={reportsLoading}
+                  >
+                    <RefreshCw size={16} className={`mr-2 ${reportsLoading ? "animate-spin" : ""}`} />
+                    Refresh reports
+                  </Button>
+                </div>
+
+                {reportsLoading ? (
+                  <p className="flex items-center gap-2 text-sm text-ink-secondary">
+                    <LoaderCircle size={16} className="animate-spin" />
+                    Loading JSON reports...
+                  </p>
+                ) : reportsError ? (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                    <p>{reportsError}</p>
+                    <p className="mt-1 text-xs">
+                      This may happen for runs created before JSON report storage was added. Run preprocessing again after updating the backend.
+                    </p>
+                  </div>
+                ) : Object.keys(reports).length ? (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.keys(reports).map((filename) => (
+                        <button
+                          key={filename}
+                          type="button"
+                          onClick={() => setActiveReport(filename)}
+                          className={`rounded-lg border px-3 py-2 text-sm transition ${
+                            activeReport === filename
+                              ? "border-orange bg-orange-50 text-orange"
+                              : "border-surface-border bg-white text-ink-secondary hover:bg-surface-page"
+                          }`}
+                        >
+                          {filename}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="overflow-hidden rounded-xl border border-surface-border">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border bg-surface-page px-4 py-3">
+                        <p className="break-all text-sm font-medium text-ink">{activeReport}</p>
+                        <Button
+                          variant="secondary"
+                          onClick={() => handleDownloadReport(activeReport)}
+                        >
+                          <Download size={15} className="mr-2" />
+                          Download JSON
+                        </Button>
+                      </div>
+                      <pre className="max-h-[520px] overflow-auto bg-white p-4 text-xs leading-6 text-ink">
+                        {JSON.stringify(reports[activeReport] ?? {}, null, 2)}
+                      </pre>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-lg bg-surface-page p-4 text-sm text-ink-secondary">
+                    No JSON reports are available for this run yet. Update the backend and run preprocessing again to generate them.
+                  </div>
+                )}
               </div>
             </Card>
 
