@@ -3,24 +3,30 @@ export const BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 async function request(path, options = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const headers = { ...options.headers };
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
+
+  if (options.body !== undefined && !isFormData) {
+    headers["Content-Type"] =
+      headers["Content-Type"] || "application/json";
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers,
   });
 
-  const data = await res.json().catch(() => ({}));
+  const data = await response.json().catch(() => ({}));
 
-  if (!res.ok) {
+  if (!response.ok) {
     const detail = data.detail;
     const message = Array.isArray(detail)
       ? detail.map((item) => item.msg).join(", ")
       : typeof detail === "string"
         ? detail
-        : `Request failed (${res.status})`;
+        : `Request failed (${response.status})`;
 
     throw new Error(message);
   }

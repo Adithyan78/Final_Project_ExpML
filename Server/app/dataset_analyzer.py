@@ -1094,15 +1094,29 @@ class DatasetAnalyzer:
         # ------------------------------------------------------------
         # Overview
         # ------------------------------------------------------------
+        missing_cells = int(df.isna().sum().sum())
+        total_cells = int(df.shape[0] * df.shape[1])
+
         overview = {
             "n_rows": int(df.shape[0]),
             "n_cols": int(df.shape[1]),
             "n_duplicate_rows": duplicate_count,
+            "duplicate_rows_pct": _round(duplicate_count / len(df) * 100 if len(df) else 0, config.round_digits),
+            "missing_cells": missing_cells,
+            "missing_cells_pct": _round(missing_cells / total_cells * 100 if total_cells else 0, config.round_digits),
             "categorical_columns": len(categorical_columns),
             "numeric_columns": len(numeric_columns),
             "datetime_columns": len(datetime_columns),
             "text_columns": len(text_columns),
+            "constant_columns": int(sum(df[column].nunique(dropna=False) <= 1 for column in df.columns)),
         }
+
+        visualization_data = build_visualization_data(
+            df=df,
+            column_types=column_types,
+            numeric_columns=numeric_columns,
+            config=config,
+        )
 
         # ------------------------------------------------------------
         # Quality flags
@@ -1124,11 +1138,119 @@ class DatasetAnalyzer:
             "high_correlation_pairs": high_correlation_pairs,
             "target_association": target_association,
             "quality_flags": quality_flags,
+            "visualizations": visualization_data,
             "warnings": [],
         }
 
         return _json_safe(profile)
 
+
+
+def build_visualization_data(
+    df: pd.DataFrame,
+    column_types: Dict[str, str],
+    numeric_columns: List[str],
+    config: AnalyzerConfig,
+) -> Dict[str, Any]:
+    """Build bounded, JSON-safe chart data from the original dataset."""
+    row_count = len(df)
+    missing_by_column = [
+        {
+            "column": str(column),
+            "missing_count": int(df[column].isna().sum()),
+            "missing_pct": _round(df[column].isna().mean() * 100, config.round_digits) or 0.0,
+        }
+        for column in df.columns
+    ]
+    missing_by_column.sort(key=lambda item: item["missing_pct"], reverse=True)
+
+    distributions: Dict[str, Any] = {}
+    for column in numeric_columns:
+        values = pd.to_numeric(df[column], errors="coerce").dropna()
+        if values.empty:
+            continue
+        counts, edges = np.histogram(values.to_numpy(dtype=float), bins=min(12, max(1, values.nunique())))
+        distributions[str(column)] = {
+            "kind": "numeric",
+            "count": int(values.size),
+            "statistics": {
+                "min": _round(values.min(), config.round_digits),
+                "max": _round(values.max(), config.round_digits),
+                "mean": _round(values.mean(), config.round_digits),
+                "median": _round(values.median(), config.round_digits),
+                "std": _round(values.std(), config.round_digits),
+                "skewness": _round(values.skew(), config.round_digits),
+                "q1": _round(values.quantile(0.25), config.round_digits),
+                "q3": _round(values.quantile(0.75), config.round_digits),
+            },
+            "histogram": [
+                {
+                    "bin_start": _round(edges[i], config.round_digits),
+                    "bin_end": _round(edges[i + 1], config.round_digits),
+                    "count": int(counts[i]),
+                }
+                for i in range(len(counts))
+            ],
+        }
+
+    category_counts: Dict[str, Any] = {}
+    for column, inferred_type in column_types.items():
+        if inferred_type not in {"categorical", "text", "datetime"}:
+            continue
+        counts = df[column].astype("string").fillna("Missing").value_counts().head(12)
+        if counts.empty:
+            continue
+        category_counts[str(column)] = {
+            "kind": inferred_type,
+            "total_categories": int(df[column].nunique(dropna=False)),
+            "categories": [
+                {"category": str(label), "count": int(count)}
+                for label, count in counts.items()
+            ],
+        }
+
+    correlation_labels = [str(column) for column in numeric_columns]
+    if numeric_columns:
+        numeric_df = df[numeric_columns].apply(pd.to_numeric, errors="coerce")
+        corr = numeric_df.corr(method="pearson")
+        correlation_values = [
+            [ _round(corr.loc[a, b], config.round_digits) for b in numeric_columns ]
+            for a in numeric_columns
+        ]
+    else:
+        correlation_values = []
+
+    missing_cells = int(df.isna().sum().sum())
+    total_cells = int(df.shape[0] * df.shape[1])
+    duplicate_rows = count_duplicate_rows(df)
+    constant_columns = [
+        str(column) for column in df.columns
+        if df[column].nunique(dropna=False) <= 1
+    ]
+    high_cardinality_columns = [
+        {"column": str(column), "unique_count": int(df[column].nunique(dropna=True)),
+         "unique_pct": _round((df[column].nunique(dropna=True) / row_count * 100) if row_count else 0, config.round_digits)}
+        for column in df.columns
+        if row_count and df[column].nunique(dropna=True) / row_count >= 0.8 and df[column].nunique(dropna=True) >= 20
+    ]
+
+    return {
+        "summary_metrics": {
+            "total_cells": total_cells,
+            "missing_cells": missing_cells,
+            "missing_cells_pct": _round(missing_cells / total_cells * 100 if total_cells else 0, config.round_digits),
+            "duplicate_rows": duplicate_rows,
+            "duplicate_rows_pct": _round(duplicate_rows / row_count * 100 if row_count else 0, config.round_digits),
+            "constant_columns": constant_columns,
+            "constant_column_count": len(constant_columns),
+            "high_cardinality_columns": high_cardinality_columns,
+            "high_cardinality_column_count": len(high_cardinality_columns),
+        },
+        "missing_by_column": missing_by_column,
+        "numeric_distributions": distributions,
+        "category_counts": category_counts,
+        "correlation_matrix": {"labels": correlation_labels, "values": correlation_values},
+    }
 
 # ============================================================================
 # CONVENIENCE FUNCTION

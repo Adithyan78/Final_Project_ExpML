@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Eye, RefreshCw } from "lucide-react";
+import { Trash2, Eye, RefreshCw, Check } from "lucide-react";
 
 import AppShell from "../../components/layout/AppShell";
 import Card, { CardHeader } from "../../components/common/Card";
@@ -19,19 +19,13 @@ function formatDate(value) {
   if (!value) return "—";
 
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return date.toLocaleString();
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
 }
 
 function formatSize(bytes) {
   if (typeof bytes !== "number") return "";
-
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
 
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
@@ -41,6 +35,7 @@ export default function UploadPage() {
 
   const [uploads, setUploads] = useState([]);
   const [targetColumn, setTargetColumn] = useState("");
+  const [selectedDatasetId, setSelectedDatasetId] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -53,7 +48,16 @@ export default function UploadPage() {
 
     try {
       const datasets = await getDatasets();
+
       setUploads(datasets);
+
+      setSelectedDatasetId((currentId) => {
+        if (currentId && datasets.some((ds) => ds.id === currentId)) {
+          return currentId;
+        }
+
+        return datasets[0]?.id ?? "";
+      });
     } catch (err) {
       setError(err.message || "Unable to load datasets.");
     } finally {
@@ -91,10 +95,9 @@ export default function UploadPage() {
         ...current.filter((item) => item.id !== dataset.id),
       ]);
 
+      setSelectedDatasetId(dataset.id);
       setTargetColumn("");
-      setSuccess(
-        `${dataset.name} uploaded and analyzed successfully.`
-      );
+      setSuccess(`${dataset.name} uploaded and analyzed successfully.`);
     } catch (err) {
       setError(err.message || "Dataset upload failed.");
     } finally {
@@ -120,12 +123,29 @@ export default function UploadPage() {
         current.filter((item) => item.id !== dataset.id)
       );
 
+      setSelectedDatasetId((currentId) =>
+        currentId === dataset.id
+          ? uploads.find((item) => item.id !== dataset.id)?.id ?? ""
+          : currentId
+      );
+
       setSuccess(`${dataset.name} was deleted.`);
     } catch (err) {
       setError(err.message || "Unable to delete this dataset.");
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const continueToPreprocessing = () => {
+    if (!selectedDatasetId) {
+      setError("Please select a dataset first.");
+      return;
+    }
+
+    navigate(ROUTES.TRAINING, {
+      state: { datasetId: selectedDatasetId },
+    });
   };
 
   return (
@@ -158,7 +178,8 @@ export default function UploadPage() {
         />
 
         <p className="text-xs text-ink-muted mt-2">
-          Enter the exact column name you want to predict. Leave blank for profiling only.
+          Enter the exact column name you want to predict. Leave blank for
+          profiling without a target. You can also choose an objective later.
         </p>
       </Card>
 
@@ -169,7 +190,8 @@ export default function UploadPage() {
           role="status"
           className="mt-4 rounded-lg border border-surface-border bg-surface-page p-4 text-sm text-ink-secondary"
         >
-          Uploading and analyzing your dataset. Larger files may take a little longer...
+          Uploading and analyzing your dataset. Larger files may take a little
+          longer...
         </div>
       )}
 
@@ -195,7 +217,7 @@ export default function UploadPage() {
         <div className="px-5 pt-5">
           <CardHeader
             title="Recent Uploads"
-            subtitle="Datasets saved to your workspace"
+            subtitle="Select a dataset to analyze in your workspace"
             action={
               <button
                 type="button"
@@ -217,6 +239,7 @@ export default function UploadPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-t border-surface-border text-left text-[11px] uppercase tracking-wide text-ink-muted">
+                <th className="font-medium px-5 py-2.5">Select</th>
                 <th className="font-medium px-5 py-2.5">Name</th>
                 <th className="font-medium px-5 py-2.5">Rows</th>
                 <th className="font-medium px-5 py-2.5">Columns</th>
@@ -228,96 +251,125 @@ export default function UploadPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-5 py-8 text-center text-ink-muted"
-                  >
+                  <td colSpan={6} className="px-5 py-8 text-center text-ink-muted">
                     Loading datasets...
                   </td>
                 </tr>
               ) : uploads.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-5 py-8 text-center text-ink-muted"
-                  >
+                  <td colSpan={6} className="px-5 py-8 text-center text-ink-muted">
                     No datasets yet. Upload a CSV to get started.
                   </td>
                 </tr>
               ) : (
-                uploads.map((ds) => (
-                  <tr
-                    key={ds.id}
-                    className="border-t border-surface-border hover:bg-surface-page/60 transition-default"
-                  >
-                    <td className="px-5 py-3 font-medium text-ink whitespace-nowrap">
-                      <div>{ds.name}</div>
-                      {typeof ds.size_bytes === "number" && (
-                        <div className="text-xs font-normal text-ink-muted mt-0.5">
-                          {formatSize(ds.size_bytes)}
+                uploads.map((ds) => {
+                  const selected = selectedDatasetId === ds.id;
+
+                  return (
+                    <tr
+                      key={ds.id}
+                      onClick={() => setSelectedDatasetId(ds.id)}
+                      className={`border-t border-surface-border cursor-pointer transition-default ${
+                        selected
+                          ? "bg-orange-50/70"
+                          : "hover:bg-surface-page/60"
+                      }`}
+                    >
+                      <td className="px-5 py-3">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedDatasetId(ds.id);
+                          }}
+                          aria-label={`Select ${ds.name}`}
+                          aria-pressed={selected}
+                          className={`flex h-6 w-6 items-center justify-center rounded-full border ${
+                            selected
+                              ? "border-orange bg-orange text-white"
+                              : "border-surface-border text-transparent"
+                          }`}
+                        >
+                          <Check size={13} />
+                        </button>
+                      </td>
+
+                      <td className="px-5 py-3 font-medium text-ink whitespace-nowrap">
+                        <div>{ds.name}</div>
+                        {typeof ds.size_bytes === "number" && (
+                          <div className="text-xs font-normal text-ink-muted mt-0.5">
+                            {formatSize(ds.size_bytes)}
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-5 py-3 text-ink-secondary">
+                        {Number(ds.n_rows ?? 0).toLocaleString()}
+                      </td>
+
+                      <td className="px-5 py-3 text-ink-secondary">
+                        {ds.n_cols ?? 0}
+                      </td>
+
+                      <td className="px-5 py-3 text-ink-muted whitespace-nowrap">
+                        {formatDate(ds.created_at)}
+                      </td>
+
+                      <td className="px-5 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              navigate(ROUTES.TRAINING, {
+                                state: { datasetId: ds.id },
+                              });
+                            }}
+                            className="p-1.5 rounded-md text-ink-secondary hover:text-orange hover:bg-orange-50 transition-default"
+                            aria-label={`Analyze ${ds.name}`}
+                            title="Analyze this dataset"
+                          >
+                            <Eye size={15} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDelete(ds);
+                            }}
+                            disabled={deletingId === ds.id || uploading}
+                            className="p-1.5 rounded-md text-ink-secondary hover:text-state-error hover:bg-[#FCEAEA] transition-default disabled:opacity-40"
+                            aria-label={`Delete ${ds.name}`}
+                            title="Delete dataset"
+                          >
+                            {deletingId === ds.id ? (
+                              <RefreshCw size={15} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={15} />
+                            )}
+                          </button>
                         </div>
-                      )}
-                    </td>
-
-                    <td className="px-5 py-3 text-ink-secondary">
-                      {Number(ds.n_rows ?? 0).toLocaleString()}
-                    </td>
-
-                    <td className="px-5 py-3 text-ink-secondary">
-                      {ds.n_cols ?? 0}
-                    </td>
-
-                    <td className="px-5 py-3 text-ink-muted whitespace-nowrap">
-                      {formatDate(ds.created_at)}
-                    </td>
-
-                    <td className="px-5 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            navigate(ROUTES.TRAINING, {
-                              state: { datasetId: ds.id },
-                            })
-                          }
-                          className="p-1.5 rounded-md text-ink-secondary hover:text-orange hover:bg-orange-50 transition-default"
-                          aria-label={`Use ${ds.name}`}
-                          title="Continue with this dataset"
-                        >
-                          <Eye size={15} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(ds)}
-                          disabled={deletingId === ds.id || uploading}
-                          className="p-1.5 rounded-md text-ink-secondary hover:text-state-error hover:bg-[#FCEAEA] transition-default disabled:opacity-40"
-                          aria-label={`Delete ${ds.name}`}
-                          title="Delete dataset"
-                        >
-                          {deletingId === ds.id ? (
-                            <RefreshCw
-                              size={15}
-                              className="animate-spin"
-                            />
-                          ) : (
-                            <Trash2 size={15} />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </Card>
 
-      <div className="flex justify-end mt-6">
+      <div className="mt-6 flex flex-col items-end gap-2">
+        <p className="text-xs text-ink-muted">
+          {selectedDatasetId
+            ? `Selected: ${uploads.find((ds) => ds.id === selectedDatasetId)?.name ?? "Dataset"}`
+            : "Select a dataset to continue."}
+        </p>
+
         <Button
-          onClick={() => navigate(ROUTES.TRAINING)}
-          disabled={uploads.length === 0 || uploading}
+          onClick={continueToPreprocessing}
+          disabled={!selectedDatasetId || loading || uploading || Boolean(deletingId)}
         >
           Continue to Preprocessing
         </Button>
