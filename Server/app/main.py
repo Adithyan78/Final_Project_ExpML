@@ -11,6 +11,7 @@ from .dashboard import router as dashboard_router
 from .database import connect_db, close_db
 from .preprocessing import router as preprocessing_router
 
+from .preprocessing import router as preprocessing_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

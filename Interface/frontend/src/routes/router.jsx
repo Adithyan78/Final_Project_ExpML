@@ -19,7 +19,7 @@ import ModelComparisonPage from "../pages/Experiment/ModelComparisonPage";
 import ExplainabilityPage from "../pages/Experiment/ExplainabilityPage";
 import ChatPage from "../pages/Experiment/ChatPage";
 import RunHistoryPage from "../pages/History/RunHistoryPage";
-
+import PreprocessingPage from "../pages/Experiment/PreprocessingPage";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
@@ -50,7 +50,10 @@ export default function AppRouter() {
           <Route path={ROUTES.CHAT} element={<ChatPage />} />
           <Route path={ROUTES.HISTORY} element={<RunHistoryPage />} />
         </Route>
-
+        <Route
+          path={ROUTES.PREPROCESSING}
+          element={<PreprocessingPage />}
+        />
         {/* Unknown routes */}
         <Route
           path="*"
