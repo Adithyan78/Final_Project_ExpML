@@ -1,0 +1,10 @@
+feature_selection:
+  variance:
+    enabled: true
+    threshold: 0.01
+
+  mutual_information:
+    enabled: true
+    top_k: 10
+    random_state: 42
+    aggregation: max

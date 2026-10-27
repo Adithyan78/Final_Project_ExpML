@@ -8,11 +8,12 @@ client = None
 db = None
 users = None
 datasets = None
+preprocessing_runs = None
 gridfs_bucket = None
 
 
 async def connect_db():
-    global client, db, users, datasets, gridfs_bucket
+    global client, db, users, datasets, preprocessing_runs, gridfs_bucket
 
     if not MONGODB_URI:
         raise RuntimeError("MONGODB_URI is missing from .env")
@@ -25,13 +26,20 @@ async def connect_db():
         db = client[MONGODB_DATABASE]
         users = db["users"]
         datasets = db["datasets"]
+        preprocessing_runs = db["preprocessing_runs"]
         gridfs_bucket = AsyncGridFSBucket(db)
 
         await users.create_index("email", unique=True)
         await datasets.create_index(
             [("owner_id", 1), ("created_at", -1)]
         )
+        await preprocessing_runs.create_index(
+            [("owner_id", 1), ("created_at", -1)]
+        )
 
+        await preprocessing_runs.create_index(
+            [("dataset_id", 1), ("created_at", -1)]
+        )
         print("MongoDB connected successfully.")
 
     except Exception:
@@ -40,6 +48,7 @@ async def connect_db():
         db = None
         users = None
         datasets = None
+        preprocessing_runs = None
         gridfs_bucket = None
         raise
 
@@ -72,6 +81,14 @@ async def close_db():
     db = None
     users = None
     datasets = None
+    preprocessing_runs = None
     gridfs_bucket = None
 
     print("MongoDB connection closed.")
+
+
+def get_preprocessing_runs_collection():
+    if preprocessing_runs is None:
+        raise RuntimeError("Database is not connected.")
+
+    return preprocessing_runs

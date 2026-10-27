@@ -9,6 +9,7 @@ from .auth import router as auth_router
 from .datasets import router as datasets_router
 from .dashboard import router as dashboard_router
 from .database import connect_db, close_db
+from .preprocessing import router as preprocessing_router
 
 
 @asynccontextmanager
@@ -38,7 +39,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(datasets_router, prefix="/datasets")
 app.include_router(dashboard_router)
-
+app.include_router(preprocessing_router)
 
 @app.get("/")
 async def root():
