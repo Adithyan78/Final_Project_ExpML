@@ -371,7 +371,7 @@ export default function UploadPage() {
           onClick={continueToPreprocessing}
           disabled={!selectedDatasetId || loading || uploading || Boolean(deletingId)}
         >
-          Continue to Preprocessing
+          Continue to Dataset Analyzer
         </Button>
       </div>
     </AppShell>
