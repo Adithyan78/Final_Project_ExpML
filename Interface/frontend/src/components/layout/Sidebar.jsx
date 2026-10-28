@@ -1,4 +1,6 @@
-import { NavLink } from "react-router-dom";
+
+import { useEffect, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutGrid,
   Database,
@@ -9,8 +11,12 @@ import {
   History,
   Boxes,
   Workflow,
+  LogOut,
+  LoaderCircle,
 } from "lucide-react";
+
 import { ROUTES } from "../../constants/routes";
+import { getCurrentUser, logout } from "../../services/auth";
 
 const ICONS = {
   LayoutGrid,
@@ -48,7 +54,58 @@ const NAV_SECTIONS = [
   },
 ];
 
+function getInitials(name = "") {
+  return name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("") || "U";
+}
+
 export default function Sidebar({ onNavigate }) {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [logoutError, setLogoutError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    getCurrentUser()
+      .then((data) => {
+        if (active) setUser(data?.user ?? data ?? null);
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setProfileLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
+    setLogoutError("");
+
+    try {
+      await logout();
+      setUser(null);
+      navigate(ROUTES.LOGIN, { replace: true });
+    } catch (error) {
+      setLogoutError(error?.message || "Logout failed. Please try again.");
+      setLoggingOut(false);
+    }
+  };
+
   return (
     <aside className="flex flex-col h-full w-[232px] bg-white border-r border-surface-border shrink-0">
       <div className="flex items-center gap-2 px-5 h-16 border-b border-surface-border">
@@ -68,9 +125,11 @@ export default function Sidebar({ onNavigate }) {
                 {section.heading}
               </p>
             )}
+
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const Icon = ICONS[item.icon];
+
                 return (
                   <NavLink
                     key={item.path}
@@ -95,15 +154,40 @@ export default function Sidebar({ onNavigate }) {
       </nav>
 
       <div className="px-3 py-4 border-t border-surface-border">
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-surface-page transition-default cursor-pointer">
-          <div className="w-7 h-7 rounded-full bg-ink flex items-center justify-center text-white text-xs font-semibold shrink-0">
-            M
+        <div className="flex items-center gap-2.5 px-2 py-2">
+          <div className="w-8 h-8 rounded-full bg-ink flex items-center justify-center text-white text-xs font-semibold shrink-0">
+            {getInitials(user?.name)}
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-ink truncate">Demo</p>
-            <p className="text-[11px] text-ink-muted truncate">Personal workspace</p>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-ink truncate">
+              {profileLoading ? "Loading profile..." : user?.name || "Account"}
+            </p>
+            <p className="text-[11px] text-ink-muted truncate">
+              {user?.email || "Signed-in workspace"}
+            </p>
           </div>
         </div>
+
+        {logoutError && (
+          <p role="alert" className="px-2 mt-1 text-xs text-state-error">
+            {logoutError}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink-secondary hover:bg-red-50 hover:text-red-600 disabled:opacity-50 transition-default"
+        >
+          {loggingOut ? (
+            <LoaderCircle size={16} className="animate-spin" />
+          ) : (
+            <LogOut size={16} />
+          )}
+          {loggingOut ? "Logging out..." : "Log out"}
+        </button>
       </div>
     </aside>
   );

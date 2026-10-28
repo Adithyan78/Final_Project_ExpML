@@ -24,6 +24,41 @@ import {
 } from "../../services/preprocessing";
 
 
+
+function DonutChart({ segments, total, centerLabel = "Total", centerValue }) {
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+  const colors = ["#ff6534", "#cbd5e1", "#16a34a", "#8b5cf6", "#0ea5e9"];
+  return (
+    <div className="flex flex-wrap items-center gap-5">
+      <div className="relative h-36 w-36 shrink-0">
+        <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" role="img" aria-label={`${centerLabel}: ${centerValue ?? total}`}>
+          <circle cx="50" cy="50" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="13" />
+          {segments.filter((segment) => segment.value > 0).map((segment, index) => {
+            const length = (segment.value / Math.max(total, 1)) * circumference;
+            const circle = <circle key={segment.label} cx="50" cy="50" r={radius} fill="none" stroke={segment.color || colors[index % colors.length]} strokeWidth="13" strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-offset} />;
+            offset += length;
+            return circle;
+          })}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className="text-xs text-ink-muted">{centerLabel}</span>
+          <span className="text-xl font-semibold text-ink">{centerValue ?? total}</span>
+        </div>
+      </div>
+      <div className="min-w-[150px] flex-1 space-y-3">
+        {segments.map((segment, index) => (
+          <div key={segment.label} className="flex items-center justify-between gap-4 text-sm">
+            <span className="flex items-center gap-2 text-ink-secondary"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: segment.color || colors[index % colors.length] }} />{segment.label}</span>
+            <span className="font-medium text-ink">{segment.value} <span className="text-ink-muted">({total ? Math.round((segment.value / total) * 100) : 0}%)</span></span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function PreprocessingPage() {
   const location = useLocation();
   const initialDatasetId = location.state?.datasetId || "";
@@ -510,26 +545,28 @@ export default function PreprocessingPage() {
                     </div>
                     <div className="grid gap-5 lg:grid-cols-2">
                       <div className="rounded-xl border border-surface-border p-4">
-                        <h4 className="font-medium text-ink">Train/test split</h4>
-                        <div className="mt-4 flex h-4 overflow-hidden rounded-full bg-surface-page" aria-label="Train and test row distribution">
-                          <div className="bg-orange" style={{ width: `${(Number(result.train_rows || 0) / Math.max(1, Number(result.train_rows || 0) + Number(result.test_rows || 0))) * 100}%` }} />
-                          <div className="bg-slate-300" style={{ width: `${(Number(result.test_rows || 0) / Math.max(1, Number(result.train_rows || 0) + Number(result.test_rows || 0))) * 100}%` }} />
-                        </div>
-                        <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
-                          <span className="text-ink"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-orange" />Training: {result.train_rows ?? 0} rows</span>
-                          <span className="text-ink-secondary"><span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-slate-300" />Testing: {result.test_rows ?? 0} rows</span>
-                        </div>
+                        <h4 className="mb-4 font-medium text-ink">Train/test split</h4>
+                        <DonutChart
+                          segments={[
+                            { label: "Training", value: Number(result.train_rows || 0), color: "#ff6534" },
+                            { label: "Testing", value: Number(result.test_rows || 0), color: "#cbd5e1" },
+                          ]}
+                          total={Number(result.train_rows || 0) + Number(result.test_rows || 0)}
+                          centerLabel="Total rows"
+                        />
                       </div>
                       <div className="rounded-xl border border-surface-border p-4">
-                        <h4 className="font-medium text-ink">Transformation activity</h4>
-                        {[ ["Dropped", logSummary.dropped], ["Imputed", logSummary.imputed], ["Encoded", logSummary.encoded], ["Scaled", logSummary.scaled] ].map(([label, count]) => {
-                          const maxCount = Math.max(1, logSummary.dropped, logSummary.imputed, logSummary.encoded, logSummary.scaled);
-                          return <div key={label} className="mt-3 grid grid-cols-[88px_1fr_28px] items-center gap-2 text-sm">
-                            <span className="text-ink-secondary">{label}</span>
-                            <div className="h-2.5 overflow-hidden rounded-full bg-surface-page"><div className="h-full rounded-full bg-orange" style={{ width: `${(count / maxCount) * 100}%` }} /></div>
-                            <span className="text-right font-medium text-ink">{count}</span>
-                          </div>;
-                        })}
+                        <h4 className="mb-4 font-medium text-ink">Transformation activity</h4>
+                        <DonutChart
+                          segments={[
+                            { label: "Dropped", value: logSummary.dropped, color: "#ff6534" },
+                            { label: "Imputed", value: logSummary.imputed, color: "#0ea5e9" },
+                            { label: "Encoded", value: logSummary.encoded, color: "#16a34a" },
+                            { label: "Scaled", value: logSummary.scaled, color: "#8b5cf6" },
+                          ]}
+                          total={logSummary.dropped + logSummary.imputed + logSummary.encoded + logSummary.scaled}
+                          centerLabel="Actions"
+                        />
                         <p className="mt-3 text-xs text-ink-muted">Counts reflect logged actions; one column may have multiple events.</p>
                       </div>
                     </div>

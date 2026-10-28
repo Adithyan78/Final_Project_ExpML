@@ -3,10 +3,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
-  FolderKanban,
   Database,
-  FlaskConical,
-  CheckCircle2,
+  Workflow,
+  Rows3,
+  Columns3,
   UploadCloud,
   ArrowRight,
   RefreshCw,
@@ -15,28 +15,17 @@ import {
 import AppShell from "../../components/layout/AppShell";
 import Card, { CardHeader } from "../../components/common/Card";
 import Button from "../../components/common/Button";
-import Badge from "../../components/common/Badge";
 import { ROUTES } from "../../constants/routes";
 
 import { getDashboardSummary } from "../../services/datasets";
-import {
-  dashboardStats as mockDashboardStats,
-  recentExperiments,
-} from "../../mock/mockData";
+import { getPreprocessingRuns } from "../../services/preprocessing";
 
 const STAT_ICONS = [
-  FolderKanban,
   Database,
-  FlaskConical,
-  CheckCircle2,
+  Workflow,
+  Rows3,
+  Columns3,
 ];
-
-function statusTone(status) {
-  if (status === "Completed") return "success";
-  if (status === "Training") return "info";
-  if (status === "Failed") return "error";
-  return "neutral";
-}
 
 function formatDate(value) {
   if (!value) return "—";
@@ -52,6 +41,7 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [preprocessingRunCount, setPreprocessingRunCount] = useState(null);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -60,6 +50,23 @@ export default function DashboardPage() {
     try {
       const data = await getDashboardSummary();
       setSummary(data);
+
+      // Count real preprocessing runs for the datasets returned by the dashboard.
+      const uploads = data?.recent_uploads ?? [];
+      const runLists = await Promise.all(
+        uploads.map(async (dataset) => {
+          try {
+            const result = await getPreprocessingRuns(dataset.id);
+            if (Array.isArray(result)) return result;
+            if (Array.isArray(result?.runs)) return result.runs;
+            if (Array.isArray(result?.items)) return result.items;
+            return [];
+          } catch {
+            return [];
+          }
+        })
+      );
+      setPreprocessingRunCount(runLists.reduce((total, runs) => total + runs.length, 0));
     } catch (err) {
       setError(err.message || "Unable to load dashboard data.");
     } finally {
@@ -72,48 +79,24 @@ export default function DashboardPage() {
   }, [loadSummary]);
 
   const apiStats = summary?.stats;
-
-  // Dataset count is real. Projects and experiment metrics remain
-  // zero until those backend features are implemented.
-  const dashboardStats = mockDashboardStats.map((stat) => {
-    if (stat.label === "Datasets") {
-      return {
-        ...stat,
-        value: apiStats?.total_datasets ?? 0,
-      };
-    }
-
-    if (stat.label === "Projects") {
-      return {
-        ...stat,
-        value: apiStats?.total_projects ?? 0,
-      };
-    }
-
-    if (
-      stat.label === "Experiments" ||
-      stat.label === "Total Experiments"
-    ) {
-      return {
-        ...stat,
-        value: apiStats?.experiments ?? 0,
-      };
-    }
-
-    if (
-      stat.label === "Completed Runs" ||
-      stat.label === "Completed"
-    ) {
-      return {
-        ...stat,
-        value: apiStats?.completed_runs ?? 0,
-      };
-    }
-
-    return stat;
-  });
-
   const recentUploads = summary?.recent_uploads ?? [];
+  const recentRows = recentUploads.reduce(
+    (total, dataset) => total + Number(dataset.n_rows ?? 0),
+    0
+  );
+  const latestDatasetColumns = recentUploads[0]?.n_cols ?? 0;
+
+  // All four cards use real workspace data; no mock project/experiment counts.
+  const dashboardStats = [
+    { label: "Datasets", value: apiStats?.total_datasets ?? recentUploads.length },
+    {
+      label: "Recent Preprocessing Runs",
+      value: preprocessingRunCount === null ? "—" : preprocessingRunCount,
+    },
+    { label: "Rows in Recent Datasets", value: recentRows.toLocaleString() },
+    { label: "Latest Dataset Columns", value: latestDatasetColumns },
+  ];
+
 
   return (
     <AppShell>
@@ -175,77 +158,84 @@ export default function DashboardPage() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Recent Experiments: mock data until training API exists */}
+          {/* Real workspace activity: use uploaded datasets instead of mock experiments */}
           <Card padding="p-0">
             <div className="px-5 pt-5">
               <CardHeader
-                title="Recent Experiments"
-                subtitle="Your latest AutoML runs"
+                title="Continue your workflow"
+                subtitle="Pick up with a dataset already in your workspace"
                 action={
-                  <Link
-                    to={ROUTES.HISTORY}
-                    className="text-xs font-medium text-orange hover:text-orange-light inline-flex items-center gap-1"
+                  <button
+                    type="button"
+                    onClick={loadSummary}
+                    disabled={loading}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-orange hover:text-orange-light disabled:opacity-50"
                   >
-                    View all <ArrowRight size={12} />
-                  </Link>
+                    <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+                    Refresh
+                  </button>
                 }
               />
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-t border-surface-border text-left text-[11px] uppercase tracking-wide text-ink-muted">
-                    <th className="font-medium px-5 py-2.5">Experiment</th>
-                    <th className="font-medium px-5 py-2.5">Dataset</th>
-                    <th className="font-medium px-5 py-2.5">Status</th>
-                    <th className="font-medium px-5 py-2.5">Best Model</th>
-                    <th className="font-medium px-5 py-2.5">F1 Score</th>
-                    <th className="font-medium px-5 py-2.5">Updated</th>
-                  </tr>
-                </thead>
+            <div className="p-4 space-y-3">
+              {loading ? (
+                <div className="py-8 text-center text-sm text-ink-muted">
+                  Loading your datasets...
+                </div>
+              ) : recentUploads.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-surface-border px-5 py-8 text-center">
+                  <Database size={24} className="mx-auto text-ink-muted mb-2" />
+                  <p className="text-sm font-medium text-ink">Your workspace is ready</p>
+                  <p className="text-xs text-ink-secondary mt-1 mb-4">
+                    Upload a CSV to profile it and start preprocessing.
+                  </p>
+                  <Link to={ROUTES.UPLOAD}>
+                    <Button size="sm" icon={Plus}>Upload your first dataset</Button>
+                  </Link>
+                </div>
+              ) : (
+                recentUploads.slice(0, 4).map((ds) => (
+                  <div
+                    key={ds.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-surface-border p-4 transition-default hover:border-orange/40 hover:bg-surface-page/50"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                        <Database size={16} className="text-orange" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-ink truncate">{ds.name}</p>
+                        <p className="text-xs text-ink-secondary mt-1">
+                          {Number(ds.n_rows ?? 0).toLocaleString()} rows · {ds.n_cols ?? 0} columns
+                        </p>
+                        <p className="text-xs text-ink-muted mt-1">
+                          Uploaded {formatDate(ds.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <Link to={ROUTES.UPLOAD} className="shrink-0">
+                      <Button size="sm" variant="outline" icon={ArrowRight}>
+                        Start workflow
+                      </Button>
+                    </Link>
+                  </div>
+                ))
+              )}
 
-                <tbody>
-                  {recentExperiments.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-5 py-8 text-center text-ink-muted"
-                      >
-                        No experiments yet. Upload a dataset to get started.
-                      </td>
-                    </tr>
-                  ) : (
-                    recentExperiments.map((exp) => (
-                      <tr
-                        key={exp.id}
-                        className="border-t border-surface-border hover:bg-surface-page/60 transition-default"
-                      >
-                        <td className="px-5 py-3 font-medium text-ink whitespace-nowrap">
-                          {exp.name}
-                        </td>
-                        <td className="px-5 py-3 text-ink-secondary whitespace-nowrap">
-                          {exp.dataset}
-                        </td>
-                        <td className="px-5 py-3">
-                          <Badge tone={statusTone(exp.status)}>
-                            {exp.status}
-                          </Badge>
-                        </td>
-                        <td className="px-5 py-3 text-ink-secondary whitespace-nowrap">
-                          {exp.bestModel}
-                        </td>
-                        <td className="px-5 py-3 text-ink whitespace-nowrap">
-                          {exp.f1 ? exp.f1.toFixed(3) : "—"}
-                        </td>
-                        <td className="px-5 py-3 text-ink-muted whitespace-nowrap">
-                          {exp.updated}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              {recentUploads.length > 0 && (
+                <div className="flex items-center justify-between pt-1">
+                  <p className="text-xs text-ink-muted">
+                    Showing {Math.min(recentUploads.length, 4)} of {recentUploads.length} recent datasets
+                  </p>
+                  <Link
+                    to={ROUTES.UPLOAD}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-orange hover:text-orange-light"
+                  >
+                    Add dataset <ArrowRight size={12} />
+                  </Link>
+                </div>
+              )}
             </div>
           </Card>
 

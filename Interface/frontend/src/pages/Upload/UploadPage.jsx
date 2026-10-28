@@ -164,7 +164,7 @@ export default function UploadPage() {
           htmlFor="target-column"
           className="block text-sm font-medium text-ink mb-2"
         >
-          Target column (optional)
+          Target column
         </label>
 
         <input
