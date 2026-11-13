@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Settings2,
   Target,
-  Trash2,
 } from "lucide-react";
 
 import AppShell from "../../components/layout/AppShell";
@@ -21,12 +20,14 @@ import Card, { CardHeader } from "../../components/common/Card";
 import Button from "../../components/common/Button";
 import { ROUTES } from "../../constants/routes";
 import { getDataset } from "../../services/datasets";
+import {
+  startTraining,
+  getTrainingRun,
+} from "../../services/training";
 
 const OBJECTIVES = [
   { value: "classification", label: "Classification" },
   { value: "regression", label: "Regression" },
-  { value: "clustering", label: "Clustering" },
-  { value: "exploration", label: "Exploratory analysis" },
 ];
 
 const PIPELINES = [
@@ -35,8 +36,14 @@ const PIPELINES = [
   { value: "tree", label: "Tree-based models" },
 ];
 
+const TERMINAL_STATUSES = ["completed", "failed", "cancelled"];
+
 function formatNumber(value) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+  if (
+    value === null ||
+    value === undefined ||
+    !Number.isFinite(Number(value))
+  ) {
     return "—";
   }
 
@@ -46,7 +53,11 @@ function formatNumber(value) {
 }
 
 function formatPercent(value) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+  if (
+    value === null ||
+    value === undefined ||
+    !Number.isFinite(Number(value))
+  ) {
     return "—";
   }
 
@@ -79,9 +90,7 @@ function StatCard({ label, value, hint, icon: Icon }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm text-ink-secondary">{label}</p>
-          <p className="mt-2 text-2xl font-semibold text-ink">
-            {value}
-          </p>
+          <p className="mt-2 text-2xl font-semibold text-ink">{value}</p>
           {hint && (
             <p className="mt-1 text-xs text-ink-muted">{hint}</p>
           )}
@@ -105,7 +114,12 @@ function EmptyPanel({ children }) {
   );
 }
 
-function BarList({ items, labelKey = "label", valueKey = "value", suffix = "" }) {
+function BarList({
+  items,
+  labelKey = "label",
+  valueKey = "value",
+  suffix = "",
+}) {
   if (!items?.length) {
     return <EmptyPanel>No data available for this chart.</EmptyPanel>;
   }
@@ -280,11 +294,38 @@ function SectionHeading({ title, subtitle }) {
   );
 }
 
+function getTrainingConfig({ objective, pipeline, cvSplits, maxCandidates, tune, ensemble }) {
+  const config = {
+    task: objective,
+    cv_splits: Number(cvSplits),
+    cv_repeats: 1,
+    random_state: 42,
+    max_candidates: Number(maxCandidates),
+    tune,
+    ensemble,
+  };
+
+  if (pipeline === "linear") {
+    config.include_only = ["logisticregression"];
+  }
+
+  if (pipeline === "tree") {
+    config.include_only = [
+      "adaboost",
+      "gradientboosting",
+      "histgradientboosting",
+    ];
+  }
+
+  return config;
+}
+
 export default function TrainingPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
   const datasetId = location.state?.datasetId;
+  const preprocessingRunId = location.state?.preprocessingRunId;
 
   const [dataset, setDataset] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -294,12 +335,16 @@ export default function TrainingPage() {
   const [objective, setObjective] = useState("classification");
   const [targetColumn, setTargetColumn] = useState("");
   const [pipeline, setPipeline] = useState("auto");
-  const [testSize, setTestSize] = useState("20");
-  const [includeFeatureSelection, setIncludeFeatureSelection] =
-    useState(true);
+  const [cvSplits, setCvSplits] = useState("5");
+  const [maxCandidates, setMaxCandidates] = useState("10");
+  const [tune, setTune] = useState(false);
+  const [ensemble, setEnsemble] = useState(true);
 
-  const [selectedNumericColumn, setSelectedNumericColumn] = useState("");
-  const [selectedCategoryColumn, setSelectedCategoryColumn] = useState("");
+  const [starting, setStarting] = useState(false);
+  const [trainingRunId, setTrainingRunId] = useState("");
+  const [trainingStatus, setTrainingStatus] = useState("");
+  const [trainingError, setTrainingError] = useState("");
+  const [trainingSummary, setTrainingSummary] = useState(null);
 
   async function loadDataset(isRefresh = false) {
     if (!datasetId) {
@@ -315,24 +360,21 @@ export default function TrainingPage() {
 
     try {
       const result = await getDataset(datasetId);
-      const loaded = result?.dataset ?? result?.data?.dataset ?? result?.data ?? result;
+      const loaded =
+        result?.dataset ??
+        result?.data?.dataset ??
+        result?.data ??
+        result;
 
       setDataset(loaded);
 
-      const profile = loaded?.profile;
-      const targetName = profile?.target?.name;
+      const targetName = loaded?.profile?.target?.name;
 
       if (targetName) {
         setTargetColumn(targetName);
-      } else if (!targetColumn && loaded?.columns?.length) {
-        setTargetColumn("");
       }
     } catch (err) {
-      setError(
-        err?.response?.data?.detail ||
-          err?.message ||
-          "Could not load this dataset."
-      );
+      setError(err?.message || "Could not load this dataset.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -341,9 +383,55 @@ export default function TrainingPage() {
 
   useEffect(() => {
     loadDataset();
-    // Dataset ID identifies the resource being loaded.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasetId]);
+
+  // Poll the backend while this training run is active.
+  useEffect(() => {
+    if (!trainingRunId || TERMINAL_STATUSES.includes(trainingStatus)) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    let timeoutId;
+
+    async function poll() {
+      try {
+        const result = await getTrainingRun(trainingRunId);
+
+        if (cancelled) return;
+
+        const status = result.status ?? "running";
+        setTrainingStatus(status);
+        setTrainingSummary(result.summary ?? null);
+
+        if (status === "failed") {
+          setTrainingError(result.error || "Training failed.");
+          return;
+        }
+
+        if (status === "completed") {
+          setTrainingError("");
+          return;
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setTrainingError(err.message || "Could not retrieve training status.");
+        }
+      }
+
+      if (!cancelled) {
+        timeoutId = window.setTimeout(poll, 2500);
+      }
+    }
+
+    poll();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [trainingRunId, trainingStatus]);
 
   const profile = dataset?.profile ?? {};
   const overview = profile?.overview ?? {};
@@ -441,7 +529,6 @@ export default function TrainingPage() {
 
   const qualityFlags = profile?.quality_flags ?? [];
   const warnings = profile?.warnings ?? [];
-
   const targetInfo = profile?.target;
   const classBalance = targetInfo?.class_balance ?? {};
 
@@ -465,16 +552,12 @@ export default function TrainingPage() {
       : hasTarget && targetHasHighMissing
         ? "The selected target has substantial missing values. Training may require removing rows with missing targets."
         : hasTarget && objective === "classification" && targetType === "text"
-          ? "Text targets are not supported as ordinary classification labels without additional processing."
+          ? "Text targets may need additional processing before classification."
           : hasTarget && objective === "regression" && targetType !== "numeric"
             ? "Regression generally requires a numeric target."
-            : hasTarget && objective === "clustering"
-              ? "Clustering is unsupervised and normally does not require a target column."
-              : "";
+            : "";
 
-  const constantColumns =
-    summaryMetrics.constant_columns ?? [];
-
+  const constantColumns = summaryMetrics.constant_columns ?? [];
   const highCardinalityColumns =
     summaryMetrics.high_cardinality_columns ?? [];
 
@@ -487,20 +570,81 @@ export default function TrainingPage() {
   const rowCount = overview.n_rows ?? dataset?.n_rows ?? dataset?.row_count;
   const columnCount = overview.n_cols ?? dataset?.n_cols ?? dataset?.column_count;
 
-  function handleContinue() {
+  const isTraining =
+    trainingStatus === "pending" || trainingStatus === "running";
+
+  async function handleContinue() {
+    setError("");
+    setTrainingError("");
+
     if (!datasetId) {
       setError("Select a dataset before continuing.");
       return;
     }
 
-    if (objective !== "clustering" && objective !== "exploration" && !targetColumn) {
-      setError("Choose a target column before continuing.");
+    if (!preprocessingRunId) {
+      setError(
+        "No preprocessing run was supplied. Return to preprocessing and continue from a completed run."
+      );
       return;
     }
 
-    setError(
-      "Pipeline settings are ready, but the training endpoint has not yet been connected. No model has been trained."
-    );
+    if (!targetColumn) {
+      setError("Choose a target column before starting training.");
+      return;
+    }
+
+    if (targetWarning) {
+      setError("Resolve the target-column warning before starting training.");
+      return;
+    }
+
+    if (starting || isTraining) return;
+
+    setStarting(true);
+    setTrainingStatus("submitting");
+
+    try {
+      const config = getTrainingConfig({
+        objective,
+        pipeline,
+        cvSplits,
+        maxCandidates,
+        tune,
+        ensemble,
+      });
+
+      const response = await startTraining(preprocessingRunId, config);
+      const id =
+        response.training_run_id ??
+        response.run_id ??
+        response.id;
+
+      if (!id) {
+        throw new Error(
+          "The backend accepted the request but did not return a training run ID."
+        );
+      }
+
+      setTrainingRunId(id);
+      setTrainingStatus(response.status || "pending");
+      setTrainingSummary(null);
+    } catch (err) {
+      setTrainingStatus("failed");
+      setTrainingError(err.message || "Could not start training.");
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  function openModelResults() {
+    navigate(ROUTES.COMPARISON, {
+      state: {
+        datasetId,
+        preprocessingRunId,
+        trainingRunId,
+      },
+    });
   }
 
   if (loading) {
@@ -508,7 +652,10 @@ export default function TrainingPage() {
       <AppShell>
         <div className="flex min-h-[55vh] items-center justify-center">
           <div className="text-center">
-            <LoaderCircle className="mx-auto animate-spin text-ink-secondary" size={30} />
+            <LoaderCircle
+              className="mx-auto animate-spin text-ink-secondary"
+              size={30}
+            />
             <p className="mt-4 text-sm text-ink-secondary">
               Loading dataset profile…
             </p>
@@ -524,7 +671,10 @@ export default function TrainingPage() {
         <div className="mx-auto max-w-2xl py-12">
           <Card>
             <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-1 shrink-0 text-red-500" size={22} />
+              <AlertTriangle
+                className="mt-1 shrink-0 text-red-500"
+                size={22}
+              />
               <div>
                 <h2 className="font-semibold text-ink">
                   Could not load dataset
@@ -644,9 +794,12 @@ export default function TrainingPage() {
               value={formatNumber(
                 summaryMetrics.missing_cells ?? overview.missing_cells
               )}
-              hint={formatPercent(
-                summaryMetrics.missing_cells_pct ?? overview.missing_cells_pct
-              ) + " of all cells"}
+              hint={
+                formatPercent(
+                  summaryMetrics.missing_cells_pct ??
+                    overview.missing_cells_pct
+                ) + " of all cells"
+              }
               icon={AlertTriangle}
             />
             <StatCard
@@ -654,9 +807,12 @@ export default function TrainingPage() {
               value={formatNumber(
                 summaryMetrics.duplicate_rows ?? overview.n_duplicate_rows
               )}
-              hint={formatPercent(
-                summaryMetrics.duplicate_rows_pct ?? overview.duplicate_rows_pct
-              ) + " of all rows"}
+              hint={
+                formatPercent(
+                  summaryMetrics.duplicate_rows_pct ??
+                    overview.duplicate_rows_pct
+                ) + " of all rows"
+              }
               icon={RefreshCw}
             />
           </div>
@@ -799,9 +955,7 @@ export default function TrainingPage() {
                             {titleCase(key)}
                           </p>
                           <p className="mt-1 font-semibold text-ink">
-                            {formatNumber(
-                              activeNumericData.statistics[key]
-                            )}
+                            {formatNumber(activeNumericData.statistics[key])}
                           </p>
                         </div>
                       ))}
@@ -937,9 +1091,13 @@ export default function TrainingPage() {
                   Constant columns
                 </p>
                 <p className="mt-1 text-xs text-ink-secondary">
-                  {formatNumber(summaryMetrics.constant_column_count ?? overview.constant_columns)}
-                  {" "}column(s) have one distinct value.
+                  {formatNumber(
+                    summaryMetrics.constant_column_count ??
+                      overview.constant_columns
+                  )}{" "}
+                  column(s) have one distinct value.
                 </p>
+
                 {constantColumns.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {constantColumns.map((name) => (
@@ -1020,8 +1178,8 @@ export default function TrainingPage() {
                       {titleCase(column.inferred_type ?? "unknown")}
                     </td>
                     <td className="py-3 pr-4 text-ink-secondary">
-                      {formatNumber(column.missing_count)}
-                      {" "}({formatPercent(column.missing_pct)})
+                      {formatNumber(column.missing_count)} (
+                      {formatPercent(column.missing_pct)})
                     </td>
                     <td className="py-3 pr-4 text-ink-secondary">
                       {formatNumber(column.n_unique)}
@@ -1052,7 +1210,10 @@ export default function TrainingPage() {
 
                 {!columnRows.length && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-ink-secondary">
+                    <td
+                      colSpan={6}
+                      className="py-8 text-center text-ink-secondary"
+                    >
                       No column profile is available.
                     </td>
                   </tr>
@@ -1064,8 +1225,8 @@ export default function TrainingPage() {
 
         <Card>
           <CardHeader
-            title="Configure pipeline"
-            subtitle="Set the intended task and training preferences. Training is not triggered from this screen yet."
+            title="Configure AutoML training"
+            subtitle="These settings are sent to your actual AutoML trainer."
           />
 
           <div className="grid gap-5 md:grid-cols-2">
@@ -1080,7 +1241,8 @@ export default function TrainingPage() {
                 id="objective"
                 value={objective}
                 onChange={(event) => setObjective(event.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink"
+                disabled={starting || isTraining}
+                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink disabled:opacity-50"
               >
                 {OBJECTIVES.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -1101,7 +1263,7 @@ export default function TrainingPage() {
                 id="target-column"
                 value={targetColumn}
                 onChange={(event) => setTargetColumn(event.target.value)}
-                disabled={objective === "clustering" || objective === "exploration"}
+                disabled={starting || isTraining}
                 className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink disabled:opacity-50"
               >
                 <option value="">Select a target</option>
@@ -1124,7 +1286,8 @@ export default function TrainingPage() {
                 id="pipeline"
                 value={pipeline}
                 onChange={(event) => setPipeline(event.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink"
+                disabled={starting || isTraining}
+                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink disabled:opacity-50"
               >
                 {PIPELINES.map((item) => (
                   <option key={item.value} value={item.value}>
@@ -1136,44 +1299,101 @@ export default function TrainingPage() {
 
             <div>
               <label
-                htmlFor="test-size"
+                htmlFor="cv-splits"
                 className="mb-2 block text-sm font-medium text-ink"
               >
-                Test set size
+                Cross-validation folds
               </label>
               <select
-                id="test-size"
-                value={testSize}
-                onChange={(event) => setTestSize(event.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink"
+                id="cv-splits"
+                value={cvSplits}
+                onChange={(event) => setCvSplits(event.target.value)}
+                disabled={starting || isTraining}
+                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink disabled:opacity-50"
               >
-                <option value="10">10%</option>
-                <option value="20">20%</option>
-                <option value="25">25%</option>
-                <option value="30">30%</option>
+                <option value="3">3 folds</option>
+                <option value="5">5 folds</option>
+                <option value="10">10 folds</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="max-candidates"
+                className="mb-2 block text-sm font-medium text-ink"
+              >
+                Maximum model candidates
+              </label>
+              <select
+                id="max-candidates"
+                value={maxCandidates}
+                onChange={(event) => setMaxCandidates(event.target.value)}
+                disabled={starting || isTraining}
+                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink disabled:opacity-50"
+              >
+                <option value="3">3 candidates</option>
+                <option value="5">5 candidates</option>
+                <option value="10">10 candidates</option>
+                <option value="15">15 candidates</option>
               </select>
             </div>
           </div>
 
-          <label className="mt-5 flex items-start gap-3 rounded-xl bg-surface-page p-4">
-            <input
-              type="checkbox"
-              checked={includeFeatureSelection}
-              onChange={(event) =>
-                setIncludeFeatureSelection(event.target.checked)
-              }
-              className="mt-1"
-            />
-            <span>
-              <span className="block text-sm font-medium text-ink">
-                Enable feature selection
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <label className="flex items-start gap-3 rounded-xl bg-surface-page p-4">
+              <input
+                type="checkbox"
+                checked={tune}
+                onChange={(event) => setTune(event.target.checked)}
+                disabled={starting || isTraining}
+                className="mt-1"
+              />
+              <span>
+                <span className="block text-sm font-medium text-ink">
+                  Hyperparameter tuning
+                </span>
+                <span className="mt-1 block text-xs text-ink-secondary">
+                  Tune the top candidate models using the trainer's configured search.
+                </span>
               </span>
-              <span className="mt-1 block text-xs text-ink-secondary">
-                Allow the future training pipeline to select useful features.
-                This setting is not applied until training is implemented.
+            </label>
+
+            <label className="flex items-start gap-3 rounded-xl bg-surface-page p-4">
+              <input
+                type="checkbox"
+                checked={ensemble}
+                onChange={(event) => setEnsemble(event.target.checked)}
+                disabled={starting || isTraining}
+                className="mt-1"
+              />
+              <span>
+                <span className="block text-sm font-medium text-ink">
+                  Ensemble models
+                </span>
+                <span className="mt-1 block text-xs text-ink-secondary">
+                  Evaluate whether combining candidate models improves performance.
+                </span>
               </span>
-            </span>
-          </label>
+            </label>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-surface-border p-4">
+            <div className="flex items-start gap-3">
+              <Target size={19} className="mt-0.5 text-ink-secondary" />
+              <div>
+                <p className="text-sm font-medium text-ink">
+                  Preprocessing run
+                </p>
+                <p className="mt-1 break-all text-xs text-ink-secondary">
+                  {preprocessingRunId || "Missing preprocessing run ID"}
+                </p>
+                <p className="mt-2 text-xs text-ink-muted">
+                  Training uses the processed training and test files from this run.
+                  The test split is configured during preprocessing.
+                </p>
+              </div>
+            </div>
+          </div>
 
           {targetWarning && (
             <div className="mt-5 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -1186,22 +1406,105 @@ export default function TrainingPage() {
             <div className="mt-5 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
               <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
               <p>
-                Target selected: <strong>{targetColumn}</strong>.
-                Confirm that this is the outcome you intend to predict.
+                Target selected: <strong>{targetColumn}</strong>. Confirm that
+                this is the outcome you intend to predict.
               </p>
+            </div>
+          )}
+
+          {trainingError && (
+            <div className="mt-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+              <p>{trainingError}</p>
+            </div>
+          )}
+
+          {trainingRunId && (
+            <div className="mt-5 rounded-xl border border-surface-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-ink">
+                    Training run
+                  </p>
+                  <p className="mt-1 break-all text-xs text-ink-secondary">
+                    {trainingRunId}
+                  </p>
+                </div>
+
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    trainingStatus === "completed"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : trainingStatus === "failed"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  {titleCase(trainingStatus)}
+                </span>
+              </div>
+
+              {isTraining && (
+                <div className="mt-4 flex items-center gap-3 text-sm text-ink-secondary">
+                  <LoaderCircle size={18} className="animate-spin" />
+                  AutoML is training and evaluating candidate models. This page
+                  will update automatically.
+                </div>
+              )}
+
+              {trainingStatus === "completed" && (
+                <div className="mt-4">
+                  <p className="text-sm text-emerald-700">
+                    Training completed. Your model results are ready.
+                  </p>
+                  <Button onClick={openModelResults} className="mt-4">
+                    View model comparison
+                    <ArrowRight size={16} className="ml-2" />
+                  </Button>
+                </div>
+              )}
+
+              {trainingStatus === "failed" && (
+                <p className="mt-3 text-sm text-red-700">
+                  {trainingError || "Training failed. Check the run details and try again."}
+                </p>
+              )}
+
+              {trainingSummary && (
+                <pre className="mt-4 max-h-48 overflow-auto rounded-lg bg-surface-page p-3 text-xs text-ink-secondary">
+                  {JSON.stringify(trainingSummary, null, 2)}
+                </pre>
+              )}
             </div>
           )}
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-surface-border pt-5">
             <div className="text-xs text-ink-secondary">
               <Settings2 size={15} className="mr-1 inline" />
-              Objective: {titleCase(objective)} · Test set: {testSize}%
-              {" · "}Pipeline: {titleCase(pipeline)}
+              {titleCase(objective)} · {cvSplits} CV folds ·{" "}
+              {maxCandidates} candidates · {titleCase(pipeline)}
             </div>
 
-            <Button onClick={handleContinue}>
-              Continue to training
-              <ArrowRight size={16} className="ml-2" />
+            <Button
+              onClick={handleContinue}
+              disabled={starting || isTraining || trainingStatus === "completed"}
+            >
+              {starting || isTraining ? (
+                <>
+                  <LoaderCircle size={16} className="mr-2 animate-spin" />
+                  {starting ? "Starting training…" : "Training…"}
+                </>
+              ) : trainingStatus === "completed" ? (
+                <>
+                  Training completed
+                  <CheckCircle2 size={16} className="ml-2" />
+                </>
+              ) : (
+                <>
+                  Start AutoML training
+                  <ArrowRight size={16} className="ml-2" />
+                </>
+              )}
             </Button>
           </div>
         </Card>

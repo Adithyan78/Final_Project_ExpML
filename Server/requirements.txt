@@ -6,3 +6,13 @@ python-dotenv
 pydantic[email]
 pwdlib[argon2]
 PyJWT
+
+# Data science and machine learning
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.2
+PyYAML>=6.0
+joblib
+
+# Testing
+pytest>=7.0
