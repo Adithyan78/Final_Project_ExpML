@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../constants/routes";
 import {
   Workflow,
   Play,
@@ -23,35 +24,107 @@ import {
   downloadPreprocessedCSV,
 } from "../../services/preprocessing";
 
-
-
-function DonutChart({ segments, total, centerLabel = "Total", centerValue }) {
+function DonutChart({
+  segments,
+  total,
+  centerLabel = "Total",
+  centerValue,
+}) {
   const radius = 42;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
-  const colors = ["#ff6534", "#cbd5e1", "#16a34a", "#8b5cf6", "#0ea5e9"];
+
+  const colors = [
+    "#ff6534",
+    "#cbd5e1",
+    "#16a34a",
+    "#8b5cf6",
+    "#0ea5e9",
+  ];
+
   return (
     <div className="flex flex-wrap items-center gap-5">
       <div className="relative h-36 w-36 shrink-0">
-        <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" role="img" aria-label={`${centerLabel}: ${centerValue ?? total}`}>
-          <circle cx="50" cy="50" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="13" />
-          {segments.filter((segment) => segment.value > 0).map((segment, index) => {
-            const length = (segment.value / Math.max(total, 1)) * circumference;
-            const circle = <circle key={segment.label} cx="50" cy="50" r={radius} fill="none" stroke={segment.color || colors[index % colors.length]} strokeWidth="13" strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-offset} />;
-            offset += length;
-            return circle;
-          })}
+        <svg
+          viewBox="0 0 100 100"
+          className="h-full w-full -rotate-90"
+          role="img"
+          aria-label={`${centerLabel}: ${centerValue ?? total}`}
+        >
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            fill="none"
+            stroke="#f1f5f9"
+            strokeWidth="13"
+          />
+
+          {segments
+            .filter((segment) => segment.value > 0)
+            .map((segment, index) => {
+              const length =
+                (segment.value / Math.max(total, 1)) * circumference;
+
+              const circle = (
+                <circle
+                  key={segment.label}
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  fill="none"
+                  stroke={
+                    segment.color ||
+                    colors[index % colors.length]
+                  }
+                  strokeWidth="13"
+                  strokeDasharray={`${length} ${circumference - length}`}
+                  strokeDashoffset={-offset}
+                />
+              );
+
+              offset += length;
+              return circle;
+            })}
         </svg>
+
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-xs text-ink-muted">{centerLabel}</span>
-          <span className="text-xl font-semibold text-ink">{centerValue ?? total}</span>
+          <span className="text-xs text-ink-muted">
+            {centerLabel}
+          </span>
+          <span className="text-xl font-semibold text-ink">
+            {centerValue ?? total}
+          </span>
         </div>
       </div>
+
       <div className="min-w-[150px] flex-1 space-y-3">
         {segments.map((segment, index) => (
-          <div key={segment.label} className="flex items-center justify-between gap-4 text-sm">
-            <span className="flex items-center gap-2 text-ink-secondary"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: segment.color || colors[index % colors.length] }} />{segment.label}</span>
-            <span className="font-medium text-ink">{segment.value} <span className="text-ink-muted">({total ? Math.round((segment.value / total) * 100) : 0}%)</span></span>
+          <div
+            key={segment.label}
+            className="flex items-center justify-between gap-4 text-sm"
+          >
+            <span className="flex items-center gap-2 text-ink-secondary">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{
+                  backgroundColor:
+                    segment.color || colors[index % colors.length],
+                }}
+              />
+              {segment.label}
+            </span>
+
+            <span className="font-medium text-ink">
+              {segment.value}{" "}
+              <span className="text-ink-muted">
+                (
+                {total
+                  ? Math.round((segment.value / total) * 100)
+                  : 0}
+                %)
+              </span>
+            </span>
           </div>
         ))}
       </div>
@@ -61,6 +134,8 @@ function DonutChart({ segments, total, centerLabel = "Total", centerValue }) {
 
 export default function PreprocessingPage() {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const initialDatasetId = location.state?.datasetId || "";
 
   const [datasets, setDatasets] = useState([]);
@@ -78,18 +153,27 @@ export default function PreprocessingPage() {
   const [logFilter, setLogFilter] = useState("All");
   const [expandedLogs, setExpandedLogs] = useState({});
   const [reports, setReports] = useState({});
-  const [activeReport, setActiveReport] = useState("preprocessing_summary.json");
+  const [activeReport, setActiveReport] = useState(
+    "preprocessing_summary.json"
+  );
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsError, setReportsError] = useState("");
   const [insightTab, setInsightTab] = useState("overview");
 
   const columns = Object.keys(profile?.columns ?? {});
+
   const preprocessingLogs = Array.isArray(result?.preprocessing_log)
     ? result.preprocessing_log
     : [];
+
   const visiblePreprocessingLogs = preprocessingLogs.filter((item) => {
-    const log = item && typeof item === "object" ? item : { message: item };
+    const log =
+      item && typeof item === "object"
+        ? item
+        : { message: item };
+
     const action = String(log.action ?? "").toLowerCase();
+
     const text = [
       log.column,
       log.stage,
@@ -105,11 +189,17 @@ export default function PreprocessingPage() {
       .toLowerCase();
 
     let category = "Other";
+
     if (action.includes("drop")) category = "Dropped";
     else if (action.includes("imput")) category = "Missing values";
     else if (action.includes("encod")) category = "Encoding";
     else if (action.includes("scal")) category = "Scaling";
-    else if (action === "skipped" || log.source === "system") category = "System";
+    else if (
+      action === "skipped" ||
+      log.source === "system"
+    ) {
+      category = "System";
+    }
 
     return (
       (logFilter === "All" || category === logFilter) &&
@@ -124,24 +214,28 @@ export default function PreprocessingPage() {
         .map((item) => item.column)
         .filter(Boolean)
     ).size,
+
     dropped: preprocessingLogs.filter(
       (item) =>
         item &&
         typeof item === "object" &&
         String(item.action ?? "").toLowerCase().includes("drop")
     ).length,
+
     imputed: preprocessingLogs.filter(
       (item) =>
         item &&
         typeof item === "object" &&
         String(item.action ?? "").toLowerCase().includes("imput")
     ).length,
+
     encoded: preprocessingLogs.filter(
       (item) =>
         item &&
         typeof item === "object" &&
         String(item.action ?? "").toLowerCase().includes("encod")
     ).length,
+
     scaled: preprocessingLogs.filter(
       (item) =>
         item &&
@@ -160,58 +254,66 @@ export default function PreprocessingPage() {
     setRuns(data);
   }, []);
 
-  const loadDataset = useCallback(async (id) => {
-    setProfile(null);
-    setResult(null);
-    setReports({});
-    setReportsError("");
-    setTarget("");
-    setError("");
-    setNotice("");
+  const loadDataset = useCallback(
+    async (id) => {
+      setProfile(null);
+      setResult(null);
+      setReports({});
+      setReportsError("");
+      setTarget("");
+      setError("");
+      setNotice("");
 
-    if (!id) {
-      setRuns([]);
-      return;
-    }
+      if (!id) {
+        setRuns([]);
+        return;
+      }
 
-    try {
-      const [response] = await Promise.all([
-        getDataset(id),
-        loadRuns(id),
-      ]);
+      try {
+        const [response] = await Promise.all([
+          getDataset(id),
+          loadRuns(id),
+        ]);
 
-      const dataset =
-        response?.dataset ??
-        response?.data?.dataset ??
-        response?.data ??
-        response;
+        const dataset =
+          response?.dataset ??
+          response?.data?.dataset ??
+          response?.data ??
+          response;
 
-      const nextProfile = dataset?.profile ?? null;
-      setProfile(nextProfile);
+        const nextProfile = dataset?.profile ?? null;
+        setProfile(nextProfile);
 
-      const availableColumns = Object.keys(nextProfile?.columns ?? {});
-      const savedTarget = dataset?.target_column;
+        const availableColumns = Object.keys(
+          nextProfile?.columns ?? {}
+        );
 
-      setTarget(
-        savedTarget && availableColumns.includes(savedTarget)
-          ? savedTarget
-          : nextProfile?.target?.name &&
-              availableColumns.includes(nextProfile.target.name)
-            ? nextProfile.target.name
-            : ""
-      );
-    } catch (err) {
-      setError(err.message || "Could not load this dataset.");
-    }
-  }, [loadRuns]);
+        const savedTarget = dataset?.target_column;
+
+        setTarget(
+          savedTarget && availableColumns.includes(savedTarget)
+            ? savedTarget
+            : nextProfile?.target?.name &&
+                availableColumns.includes(nextProfile.target.name)
+              ? nextProfile.target.name
+              : ""
+        );
+      } catch (err) {
+        setError(err.message || "Could not load this dataset.");
+      }
+    },
+    [loadRuns]
+  );
 
   useEffect(() => {
     let active = true;
 
     async function initialise() {
       setLoading(true);
+
       try {
         const data = await getDatasets();
+
         if (!active) return;
 
         setDatasets(data);
@@ -224,15 +326,20 @@ export default function PreprocessingPage() {
 
         setDatasetId(selected);
 
-        if (selected) await loadDataset(selected);
+        if (selected) {
+          await loadDataset(selected);
+        }
       } catch (err) {
-        if (active) setError(err.message || "Could not load datasets.");
+        if (active) {
+          setError(err.message || "Could not load datasets.");
+        }
       } finally {
         if (active) setLoading(false);
       }
     }
 
     initialise();
+
     return () => {
       active = false;
     };
@@ -251,12 +358,16 @@ export default function PreprocessingPage() {
 
     setReportsLoading(true);
     setReportsError("");
+
     try {
       const data = await request(
         `/preprocessing/runs/${encodeURIComponent(runId)}/reports`
       );
+
       setReports(data?.reports ?? {});
+
       const names = Object.keys(data?.reports ?? {});
+
       if (names.length && !names.includes(activeReport)) {
         setActiveReport(names[0]);
       }
@@ -272,6 +383,7 @@ export default function PreprocessingPage() {
 
   async function handleDownloadReport(filename) {
     if (!result?.run_id || !filename) return;
+
     setError("");
 
     try {
@@ -282,29 +394,39 @@ export default function PreprocessingPage() {
 
       if (!response.ok) {
         let message = `Download failed (${response.status})`;
+
         try {
           const data = await response.json();
-          if (typeof data.detail === "string") message = data.detail;
+
+          if (typeof data.detail === "string") {
+            message = data.detail;
+          }
         } catch {
-          // Keep the HTTP status message if the response isn't JSON.
+          // Keep the HTTP status message.
         }
+
         throw new Error(message);
       }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
+
       link.href = url;
       link.download = filename;
+
       document.body.appendChild(link);
       link.click();
       link.remove();
+
       URL.revokeObjectURL(url);
     } catch (err) {
       setError(err.message || "Could not download the JSON report.");
     }
   }
 
+  // FIXED: Single handler. The API call is no longer trapped
+  // inside an unused nested function.
   async function handlePreprocess() {
     if (!datasetId) {
       setError("Choose a dataset first.");
@@ -320,6 +442,7 @@ export default function PreprocessingPage() {
     setError("");
     setNotice("");
     setResult(null);
+    setReports({});
 
     try {
       const response = await preprocessDataset(datasetId, {
@@ -328,8 +451,15 @@ export default function PreprocessingPage() {
       });
 
       setResult(response);
-      await Promise.all([loadReports(response.run_id), loadRuns(datasetId)]);
-      setNotice("Preprocessing completed. Your CSV artifacts are ready.");
+
+      await Promise.all([
+        loadReports(response.run_id),
+        loadRuns(datasetId),
+      ]);
+
+      setNotice(
+        "Preprocessing completed. Your CSV artifacts are ready."
+      );
     } catch (err) {
       setError(err.message || "Preprocessing failed.");
     } finally {
@@ -339,6 +469,7 @@ export default function PreprocessingPage() {
 
   async function handleDownload(runId, split) {
     setError("");
+
     try {
       await downloadPreprocessedCSV(runId, split);
     } catch (err) {
@@ -346,7 +477,29 @@ export default function PreprocessingPage() {
     }
   }
 
-  const activeDataset = datasets.find((item) => item.id === datasetId);
+  function handleContinueToTraining() {
+    const preprocessingRunId =
+      result?.run_id ?? result?.preprocessing_run_id;
+
+    if (!datasetId || !preprocessingRunId) {
+      setError(
+        "A completed preprocessing run is required before training."
+      );
+      return;
+    }
+
+    navigate(ROUTES.TRAINING, {
+      state: {
+        datasetId,
+        preprocessingRunId,
+        targetColumn: target,
+      },
+    });
+  }
+
+  const activeDataset = datasets.find(
+    (item) => item.id === datasetId
+  );
 
   return (
     <AppShell>
@@ -356,12 +509,14 @@ export default function PreprocessingPage() {
             <Workflow size={17} />
             Data pipeline
           </div>
+
           <h1 className="text-2xl font-semibold text-ink">
             Preprocessing workspace
           </h1>
+
           <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-secondary">
-            Prepare your dataset, select a target, review feature selection,
-            and download the processed training and testing data.
+            Prepare your dataset, select a target, review feature
+            selection, and download the processed training and testing data.
           </p>
         </div>
 
@@ -383,7 +538,9 @@ export default function PreprocessingPage() {
           <div className="space-y-5 p-5">
             <div className="flex items-center gap-2">
               <Database size={18} className="text-orange" />
-              <h2 className="font-semibold text-ink">Configure preprocessing</h2>
+              <h2 className="font-semibold text-ink">
+                Configure preprocessing
+              </h2>
             </div>
 
             {loading ? (
@@ -399,9 +556,12 @@ export default function PreprocessingPage() {
               <div className="grid gap-5 md:grid-cols-3">
                 <label className="space-y-2 text-sm">
                   <span className="font-medium text-ink">Dataset</span>
+
                   <select
                     value={datasetId}
-                    onChange={(event) => handleDatasetChange(event.target.value)}
+                    onChange={(event) =>
+                      handleDatasetChange(event.target.value)
+                    }
                     className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
                   >
                     {datasets.map((dataset) => (
@@ -413,13 +573,17 @@ export default function PreprocessingPage() {
                 </label>
 
                 <label className="space-y-2 text-sm">
-                  <span className="font-medium text-ink">Target column</span>
+                  <span className="font-medium text-ink">
+                    Target column
+                  </span>
+
                   <select
                     value={target}
                     onChange={(event) => setTarget(event.target.value)}
                     className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
                   >
                     <option value="">Select target</option>
+
                     {columns.map((column) => (
                       <option key={column} value={column}>
                         {column}
@@ -429,7 +593,10 @@ export default function PreprocessingPage() {
                 </label>
 
                 <label className="space-y-2 text-sm">
-                  <span className="font-medium text-ink">Test split</span>
+                  <span className="font-medium text-ink">
+                    Test split
+                  </span>
+
                   <select
                     value={testSize}
                     onChange={(event) => setTestSize(event.target.value)}
@@ -457,10 +624,14 @@ export default function PreprocessingPage() {
                 disabled={loading || running || !datasetId || !target}
               >
                 {running ? (
-                  <LoaderCircle size={16} className="mr-2 animate-spin" />
+                  <LoaderCircle
+                    size={16}
+                    className="mr-2 animate-spin"
+                  />
                 ) : (
                   <Play size={16} className="mr-2" />
                 )}
+
                 {running ? "Preprocessing..." : "Run preprocessing"}
               </Button>
 
@@ -482,6 +653,7 @@ export default function PreprocessingPage() {
               <h2 className="text-lg font-semibold text-ink">
                 Latest preprocessing results
               </h2>
+
               <p className="mt-1 text-sm text-ink-secondary">
                 Run ID: {result.run_id}
               </p>
@@ -492,11 +664,17 @@ export default function PreprocessingPage() {
                 ["Training rows", result.train_rows],
                 ["Testing rows", result.test_rows],
                 ["Selected features", result.feature_count],
-                ["Removed missing targets", result.rows_removed_missing_target],
+                [
+                  "Removed missing targets",
+                  result.rows_removed_missing_target,
+                ],
               ].map(([label, value]) => (
                 <Card key={label}>
                   <div className="p-5">
-                    <p className="text-sm text-ink-secondary">{label}</p>
+                    <p className="text-sm text-ink-secondary">
+                      {label}
+                    </p>
+
                     <p className="mt-2 text-2xl font-semibold text-ink">
                       {value ?? "—"}
                     </p>
@@ -508,17 +686,32 @@ export default function PreprocessingPage() {
             <Card>
               <div className="space-y-5 p-5">
                 <div>
-                  <h3 className="text-lg font-semibold text-ink">Preprocessing insights</h3>
-                  <p className="mt-1 text-sm text-ink-secondary">A visual explanation of the transformations and outputs for this run.</p>
+                  <h3 className="text-lg font-semibold text-ink">
+                    Preprocessing insights
+                  </h3>
+
+                  <p className="mt-1 text-sm text-ink-secondary">
+                    A visual explanation of the transformations and
+                    outputs for this run.
+                  </p>
                 </div>
+
                 <div className="flex flex-wrap gap-2">
                   {[
                     ["overview", "Overview"],
                     ["features", "Features"],
                     ["pipeline", "Pipeline"],
                   ].map(([key, label]) => (
-                    <button key={key} type="button" onClick={() => setInsightTab(key)}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${insightTab === key ? "border-orange bg-orange-50 text-orange" : "border-surface-border bg-white text-ink-secondary hover:bg-surface-page"}`}>
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setInsightTab(key)}
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                        insightTab === key
+                          ? "border-orange bg-orange-50 text-orange"
+                          : "border-surface-border bg-white text-ink-secondary hover:bg-surface-page"
+                      }`}
+                    >
                       {label}
                     </button>
                   ))}
@@ -528,46 +721,120 @@ export default function PreprocessingPage() {
                   <div className="space-y-5">
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="rounded-xl border border-surface-border p-4">
-                        <p className="text-sm text-ink-secondary">Input dataset</p>
-                        <p className="mt-2 text-2xl font-semibold text-ink">{profile?.row_count ?? profile?.rows ?? "—"}</p>
-                        <p className="text-xs text-ink-muted">Rows reported by the dataset profile</p>
+                        <p className="text-sm text-ink-secondary">
+                          Input dataset
+                        </p>
+
+                        <p className="mt-2 text-2xl font-semibold text-ink">
+                          {profile?.row_count ??
+                            profile?.rows ??
+                            "—"}
+                        </p>
+
+                        <p className="text-xs text-ink-muted">
+                          Rows reported by the dataset profile
+                        </p>
                       </div>
+
                       <div className="rounded-xl border border-surface-border p-4">
-                        <p className="text-sm text-ink-secondary">Output features</p>
-                        <p className="mt-2 text-2xl font-semibold text-ink">{result.feature_count ?? result.selected_features?.length ?? 0}</p>
-                        <p className="text-xs text-ink-muted">Features available for model training</p>
+                        <p className="text-sm text-ink-secondary">
+                          Output features
+                        </p>
+
+                        <p className="mt-2 text-2xl font-semibold text-ink">
+                          {result.feature_count ??
+                            result.selected_features?.length ??
+                            0}
+                        </p>
+
+                        <p className="text-xs text-ink-muted">
+                          Features available for model training
+                        </p>
                       </div>
+
                       <div className="rounded-xl border border-surface-border p-4">
-                        <p className="text-sm text-ink-secondary">Logged transformations</p>
-                        <p className="mt-2 text-2xl font-semibold text-ink">{preprocessingLogs.length}</p>
-                        <p className="text-xs text-ink-muted">Recorded preprocessing events</p>
+                        <p className="text-sm text-ink-secondary">
+                          Logged transformations
+                        </p>
+
+                        <p className="mt-2 text-2xl font-semibold text-ink">
+                          {preprocessingLogs.length}
+                        </p>
+
+                        <p className="text-xs text-ink-muted">
+                          Recorded preprocessing events
+                        </p>
                       </div>
                     </div>
+
                     <div className="grid gap-5 lg:grid-cols-2">
                       <div className="rounded-xl border border-surface-border p-4">
-                        <h4 className="mb-4 font-medium text-ink">Train/test split</h4>
+                        <h4 className="mb-4 font-medium text-ink">
+                          Train/test split
+                        </h4>
+
                         <DonutChart
                           segments={[
-                            { label: "Training", value: Number(result.train_rows || 0), color: "#ff6534" },
-                            { label: "Testing", value: Number(result.test_rows || 0), color: "#cbd5e1" },
+                            {
+                              label: "Training",
+                              value: Number(result.train_rows || 0),
+                              color: "#ff6534",
+                            },
+                            {
+                              label: "Testing",
+                              value: Number(result.test_rows || 0),
+                              color: "#cbd5e1",
+                            },
                           ]}
-                          total={Number(result.train_rows || 0) + Number(result.test_rows || 0)}
+                          total={
+                            Number(result.train_rows || 0) +
+                            Number(result.test_rows || 0)
+                          }
                           centerLabel="Total rows"
                         />
                       </div>
+
                       <div className="rounded-xl border border-surface-border p-4">
-                        <h4 className="mb-4 font-medium text-ink">Transformation activity</h4>
+                        <h4 className="mb-4 font-medium text-ink">
+                          Transformation activity
+                        </h4>
+
                         <DonutChart
                           segments={[
-                            { label: "Dropped", value: logSummary.dropped, color: "#ff6534" },
-                            { label: "Imputed", value: logSummary.imputed, color: "#0ea5e9" },
-                            { label: "Encoded", value: logSummary.encoded, color: "#16a34a" },
-                            { label: "Scaled", value: logSummary.scaled, color: "#8b5cf6" },
+                            {
+                              label: "Dropped",
+                              value: logSummary.dropped,
+                              color: "#ff6534",
+                            },
+                            {
+                              label: "Imputed",
+                              value: logSummary.imputed,
+                              color: "#0ea5e9",
+                            },
+                            {
+                              label: "Encoded",
+                              value: logSummary.encoded,
+                              color: "#16a34a",
+                            },
+                            {
+                              label: "Scaled",
+                              value: logSummary.scaled,
+                              color: "#8b5cf6",
+                            },
                           ]}
-                          total={logSummary.dropped + logSummary.imputed + logSummary.encoded + logSummary.scaled}
+                          total={
+                            logSummary.dropped +
+                            logSummary.imputed +
+                            logSummary.encoded +
+                            logSummary.scaled
+                          }
                           centerLabel="Actions"
                         />
-                        <p className="mt-3 text-xs text-ink-muted">Counts reflect logged actions; one column may have multiple events.</p>
+
+                        <p className="mt-3 text-xs text-ink-muted">
+                          Counts reflect logged actions; one column may
+                          have multiple events.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -575,34 +842,80 @@ export default function PreprocessingPage() {
 
                 {insightTab === "features" && (
                   <div className="space-y-3">
-                    <p className="text-sm text-ink-secondary">These are the features returned by the preprocessing run. Ranking scores are shown only when available in the saved results.</p>
+                    <p className="text-sm text-ink-secondary">
+                      These are the features returned by the preprocessing
+                      run. Ranking scores are shown only when available
+                      in the saved results.
+                    </p>
+
                     {result.selected_features?.length ? (
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {result.selected_features.map((feature) => (
-                          <div key={feature} className="flex items-center gap-2 rounded-lg border border-surface-border bg-surface-page px-3 py-2 text-sm text-ink">
-                            <CheckCircle2 size={15} className="shrink-0 text-emerald-600" />
+                          <div
+                            key={feature}
+                            className="flex items-center gap-2 rounded-lg border border-surface-border bg-surface-page px-3 py-2 text-sm text-ink"
+                          >
+                            <CheckCircle2
+                              size={15}
+                              className="shrink-0 text-emerald-600"
+                            />
                             <span className="break-all">{feature}</span>
                           </div>
                         ))}
                       </div>
-                    ) : <p className="text-sm text-ink-secondary">No selected features were returned for this run.</p>}
+                    ) : (
+                      <p className="text-sm text-ink-secondary">
+                        No selected features were returned for this run.
+                      </p>
+                    )}
                   </div>
                 )}
 
                 {insightTab === "pipeline" && (
                   <div className="space-y-3">
                     {[
-                      ["1", "Inspect dataset", "Review the input columns and selected target."],
-                      ["2", "Handle missing values", `${logSummary.imputed} imputation actions recorded.`],
-                      ["3", "Transform features", `${logSummary.encoded} encoding and ${logSummary.scaled} scaling actions recorded.`],
-                      ["4", "Prepare model splits", `${result.train_rows ?? 0} training rows and ${result.test_rows ?? 0} testing rows created.`],
-                    ].map(([step, title, description], index) => (
-                      <div key={step} className="flex gap-3 rounded-xl border border-surface-border p-4">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-sm font-semibold text-orange">{step}</div>
-                        <div className="min-w-0"><p className="font-medium text-ink">{title}</p><p className="mt-1 text-sm text-ink-secondary">{description}</p></div>
+                      [
+                        "1",
+                        "Inspect dataset",
+                        "Review the input columns and selected target.",
+                      ],
+                      [
+                        "2",
+                        "Handle missing values",
+                        `${logSummary.imputed} imputation actions recorded.`,
+                      ],
+                      [
+                        "3",
+                        "Transform features",
+                        `${logSummary.encoded} encoding and ${logSummary.scaled} scaling actions recorded.`,
+                      ],
+                      [
+                        "4",
+                        "Prepare model splits",
+                        `${result.train_rows ?? 0} training rows and ${result.test_rows ?? 0} testing rows created.`,
+                      ],
+                    ].map(([step, title, description]) => (
+                      <div
+                        key={step}
+                        className="flex gap-3 rounded-xl border border-surface-border p-4"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-sm font-semibold text-orange">
+                          {step}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="font-medium text-ink">{title}</p>
+                          <p className="mt-1 text-sm text-ink-secondary">
+                            {description}
+                          </p>
+                        </div>
                       </div>
                     ))}
-                    <p className="text-xs text-ink-muted">For the exact per-column reasons and rules, expand the detailed preprocessing log below.</p>
+
+                    <p className="text-xs text-ink-muted">
+                      For the exact per-column reasons and rules,
+                      expand the detailed preprocessing log below.
+                    </p>
                   </div>
                 )}
               </div>
@@ -610,7 +923,10 @@ export default function PreprocessingPage() {
 
             <Card>
               <div className="space-y-4 p-5">
-                <h3 className="font-semibold text-ink">Selected features</h3>
+                <h3 className="font-semibold text-ink">
+                  Selected features
+                </h3>
+
                 {result.selected_features?.length ? (
                   <div className="flex flex-wrap gap-2">
                     {result.selected_features.map((feature) => (
@@ -630,18 +946,34 @@ export default function PreprocessingPage() {
 
                 <div className="flex flex-wrap gap-3">
                   <Button
-                    onClick={() => handleDownload(result.run_id, "train")}
+                    onClick={() =>
+                      handleDownload(result.run_id, "train")
+                    }
                   >
                     <Download size={16} className="mr-2" />
                     Download training CSV
                   </Button>
+
                   <Button
                     variant="secondary"
-                    onClick={() => handleDownload(result.run_id, "test")}
+                    onClick={() =>
+                      handleDownload(result.run_id, "test")
+                    }
                   >
                     <Download size={16} className="mr-2" />
                     Download testing CSV
                   </Button>
+
+                  {/* <Button
+                    onClick={handleContinueToTraining}
+                    disabled={
+                      !result?.run_id &&
+                      !result?.preprocessing_run_id
+                    }
+                  >
+                    <Workflow size={16} className="mr-2" />
+                    Continue to Model Comparisson
+                  </Button> */}
                 </div>
               </div>
             </Card>
@@ -650,17 +982,27 @@ export default function PreprocessingPage() {
               <div className="space-y-5 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h3 className="font-semibold text-ink">JSON reports</h3>
+                    <h3 className="font-semibold text-ink">
+                      JSON reports
+                    </h3>
+
                     <p className="mt-1 text-sm text-ink-secondary">
-                      Inspect and download the JSON artifacts saved for this run.
+                      Inspect and download the JSON artifacts saved
+                      for this run.
                     </p>
                   </div>
+
                   <Button
                     variant="secondary"
                     onClick={() => loadReports(result.run_id)}
                     disabled={reportsLoading}
                   >
-                    <RefreshCw size={16} className={`mr-2 ${reportsLoading ? "animate-spin" : ""}`} />
+                    <RefreshCw
+                      size={16}
+                      className={`mr-2 ${
+                        reportsLoading ? "animate-spin" : ""
+                      }`}
+                    />
                     Refresh reports
                   </Button>
                 </div>
@@ -674,7 +1016,9 @@ export default function PreprocessingPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                     <p>{reportsError}</p>
                     <p className="mt-1 text-xs">
-                      This may happen for runs created before JSON report storage was added. Run preprocessing again after updating the backend.
+                      This may happen for runs created before JSON report
+                      storage was added. Run preprocessing again after
+                      updating the backend.
                     </p>
                   </div>
                 ) : Object.keys(reports).length ? (
@@ -698,23 +1042,35 @@ export default function PreprocessingPage() {
 
                     <div className="overflow-hidden rounded-xl border border-surface-border">
                       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border bg-surface-page px-4 py-3">
-                        <p className="break-all text-sm font-medium text-ink">{activeReport}</p>
+                        <p className="break-all text-sm font-medium text-ink">
+                          {activeReport}
+                        </p>
+
                         <Button
                           variant="secondary"
-                          onClick={() => handleDownloadReport(activeReport)}
+                          onClick={() =>
+                            handleDownloadReport(activeReport)
+                          }
                         >
                           <Download size={15} className="mr-2" />
                           Download JSON
                         </Button>
                       </div>
+
                       <pre className="max-h-[520px] overflow-auto bg-white p-4 text-xs leading-6 text-ink">
-                        {JSON.stringify(reports[activeReport] ?? {}, null, 2)}
+                        {JSON.stringify(
+                          reports[activeReport] ?? {},
+                          null,
+                          2
+                        )}
                       </pre>
                     </div>
                   </>
                 ) : (
                   <div className="rounded-lg bg-surface-page p-4 text-sm text-ink-secondary">
-                    No JSON reports are available for this run yet. Update the backend and run preprocessing again to generate them.
+                    No JSON reports are available for this run yet.
+                    Update the backend and run preprocessing again to
+                    generate them.
                   </div>
                 )}
               </div>
@@ -723,9 +1079,13 @@ export default function PreprocessingPage() {
             <Card>
               <div className="space-y-5 p-5">
                 <div>
-                  <h3 className="font-semibold text-ink">Preprocessing log</h3>
+                  <h3 className="font-semibold text-ink">
+                    Preprocessing log
+                  </h3>
+
                   <p className="mt-1 text-sm text-ink-secondary">
-                    Review the transformations recorded for this preprocessing run.
+                    Review the transformations recorded for this
+                    preprocessing run.
                   </p>
                 </div>
 
@@ -733,18 +1093,42 @@ export default function PreprocessingPage() {
                   <>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                       {[
-                        ["Columns affected", logSummary.columns, "Unique columns in the log"],
-                        ["Drop actions", logSummary.dropped, "Logged column-removal actions"],
-                        ["Imputation", logSummary.imputed, "Missing-value handling actions"],
-                        ["Encoding / scaling", `${logSummary.encoded} / ${logSummary.scaled}`, "Encoding actions / scaling actions"],
+                        [
+                          "Columns affected",
+                          logSummary.columns,
+                          "Unique columns in the log",
+                        ],
+                        [
+                          "Drop actions",
+                          logSummary.dropped,
+                          "Logged column-removal actions",
+                        ],
+                        [
+                          "Imputation",
+                          logSummary.imputed,
+                          "Missing-value handling actions",
+                        ],
+                        [
+                          "Encoding / scaling",
+                          `${logSummary.encoded} / ${logSummary.scaled}`,
+                          "Encoding actions / scaling actions",
+                        ],
                       ].map(([label, value, detail]) => (
                         <div
                           key={label}
                           className="rounded-xl border border-surface-border bg-surface-page p-4"
                         >
-                          <p className="text-sm text-ink-secondary">{label}</p>
-                          <p className="mt-2 text-2xl font-semibold text-ink">{value}</p>
-                          <p className="mt-1 text-xs text-ink-muted">{detail}</p>
+                          <p className="text-sm text-ink-secondary">
+                            {label}
+                          </p>
+
+                          <p className="mt-2 text-2xl font-semibold text-ink">
+                            {value}
+                          </p>
+
+                          <p className="mt-1 text-xs text-ink-muted">
+                            {detail}
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -752,40 +1136,72 @@ export default function PreprocessingPage() {
                     <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_190px]">
                       <input
                         value={logSearch}
-                        onChange={(event) => setLogSearch(event.target.value)}
+                        onChange={(event) =>
+                          setLogSearch(event.target.value)
+                        }
                         placeholder="Search column, action, reason or rule..."
                         aria-label="Search preprocessing logs"
                         className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-orange"
                       />
+
                       <select
                         value={logFilter}
-                        onChange={(event) => setLogFilter(event.target.value)}
+                        onChange={(event) =>
+                          setLogFilter(event.target.value)
+                        }
                         aria-label="Filter preprocessing logs"
                         className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-orange"
                       >
-                        {["All", "Dropped", "Missing values", "Encoding", "Scaling", "System", "Other"].map((option) => (
-                          <option key={option} value={option}>{option}</option>
+                        {[
+                          "All",
+                          "Dropped",
+                          "Missing values",
+                          "Encoding",
+                          "Scaling",
+                          "System",
+                          "Other",
+                        ].map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
                         ))}
                       </select>
                     </div>
 
                     <div className="space-y-3">
                       {visiblePreprocessingLogs.map((item, index) => {
-                        const log = item && typeof item === "object"
-                          ? item
-                          : { message: String(item) };
-                        const action = String(log.action ?? "Log event")
+                        const log =
+                          item && typeof item === "object"
+                            ? item
+                            : { message: String(item) };
+
+                        const action = String(
+                          log.action ?? "Log event"
+                        )
                           .replaceAll("_", " ")
-                          .replace(/\b\w/g, (character) => character.toUpperCase());
-                        const title = log.column || log.message || action;
-                        const isExpanded = Boolean(expandedLogs[index]);
+                          .replace(/\b\w/g, (character) =>
+                            character.toUpperCase()
+                          );
+
+                        const title =
+                          log.column || log.message || action;
+
+                        const isExpanded = Boolean(
+                          expandedLogs[index]
+                        );
+
                         const details = [
                           ["Stage", log.stage],
                           ["Action", log.action],
                           ["Reason", log.reason],
                           ["Rule ID", log.rule_id],
                           ["Source", log.source],
-                        ].filter(([, value]) => value !== undefined && value !== null && value !== "");
+                        ].filter(
+                          ([, value]) =>
+                            value !== undefined &&
+                            value !== null &&
+                            value !== ""
+                        );
 
                         return (
                           <div
@@ -804,11 +1220,19 @@ export default function PreprocessingPage() {
                               className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-surface-page"
                             >
                               <div className="min-w-0">
-                                <p className="truncate font-medium text-ink">{title}</p>
+                                <p className="truncate font-medium text-ink">
+                                  {title}
+                                </p>
+
                                 <p className="mt-1 text-sm text-ink-secondary">
-                                  {log.reason || log.stage || (log.message ? "Recorded event" : action)}
+                                  {log.reason ||
+                                    log.stage ||
+                                    (log.message
+                                      ? "Recorded event"
+                                      : action)}
                                 </p>
                               </div>
+
                               <span className="shrink-0 rounded-full border border-surface-border bg-surface-page px-2.5 py-1 text-xs text-ink-secondary">
                                 {action}
                               </span>
@@ -819,8 +1243,14 @@ export default function PreprocessingPage() {
                                 {details.length > 0 ? (
                                   <dl className="grid gap-3 sm:grid-cols-2">
                                     {details.map(([label, value]) => (
-                                      <div key={label} className="rounded-lg bg-white p-3">
-                                        <dt className="text-xs text-ink-muted">{label}</dt>
+                                      <div
+                                        key={label}
+                                        className="rounded-lg bg-white p-3"
+                                      >
+                                        <dt className="text-xs text-ink-muted">
+                                          {label}
+                                        </dt>
+
                                         <dd className="mt-1 break-words text-sm text-ink">
                                           {String(value)}
                                         </dd>
@@ -828,16 +1258,19 @@ export default function PreprocessingPage() {
                                     ))}
                                   </dl>
                                 ) : null}
+
                                 {log.message && (
                                   <p className="whitespace-pre-wrap break-words text-sm text-ink-secondary">
                                     {String(log.message)}
                                   </p>
                                 )}
-                                {details.length === 0 && !log.message && (
-                                  <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs text-ink-secondary">
-                                    {JSON.stringify(item, null, 2)}
-                                  </pre>
-                                )}
+
+                                {details.length === 0 &&
+                                  !log.message && (
+                                    <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs text-ink-secondary">
+                                      {JSON.stringify(item, null, 2)}
+                                    </pre>
+                                  )}
                               </div>
                             )}
                           </div>
@@ -852,8 +1285,9 @@ export default function PreprocessingPage() {
                     </div>
 
                     <p className="text-xs text-ink-muted">
-                      Showing {visiblePreprocessingLogs.length} of {preprocessingLogs.length} log events.
-                      Expand any event to inspect its recorded details.
+                      Showing {visiblePreprocessingLogs.length} of{" "}
+                      {preprocessingLogs.length} log events. Expand any
+                      event to inspect its recorded details.
                     </p>
                   </>
                 ) : (
@@ -870,14 +1304,22 @@ export default function PreprocessingPage() {
           <div className="p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="font-semibold text-ink">Recent runs</h2>
+                <h2 className="font-semibold text-ink">
+                  Recent runs
+                </h2>
+
                 <p className="mt-1 text-sm text-ink-secondary">
                   Previous preprocessing runs for the selected dataset.
                 </p>
               </div>
+
               <button
                 type="button"
-                onClick={() => loadRuns(datasetId).catch((err) => setError(err.message))}
+                onClick={() =>
+                  loadRuns(datasetId).catch((err) =>
+                    setError(err.message)
+                  )
+                }
                 disabled={!datasetId}
                 className="rounded-lg p-2 text-ink-secondary hover:bg-surface-page"
                 aria-label="Refresh run history"
@@ -903,6 +1345,7 @@ export default function PreprocessingPage() {
                       <th className="py-3 font-medium">Downloads</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {runs.map((run) => (
                       <tr
@@ -912,29 +1355,45 @@ export default function PreprocessingPage() {
                         <td className="py-3 pr-4 text-ink">
                           {run.target_column}
                         </td>
-                        <td className="py-3 pr-4">{run.train_rows}</td>
-                        <td className="py-3 pr-4">{run.test_rows}</td>
-                        <td className="py-3 pr-4">{run.feature_count}</td>
+
+                        <td className="py-3 pr-4">
+                          {run.train_rows}
+                        </td>
+
+                        <td className="py-3 pr-4">
+                          {run.test_rows}
+                        </td>
+
+                        <td className="py-3 pr-4">
+                          {run.feature_count}
+                        </td>
+
                         <td className="py-3 pr-4">
                           <span className="rounded-full bg-green-50 px-2 py-1 text-xs text-green-700">
                             {run.status}
                           </span>
                         </td>
+
                         <td className="py-3">
                           <div className="flex gap-2">
                             {run.artifacts?.train_available && (
                               <button
                                 type="button"
-                                onClick={() => handleDownload(run.run_id, "train")}
+                                onClick={() =>
+                                  handleDownload(run.run_id, "train")
+                                }
                                 className="text-orange hover:underline"
                               >
                                 Train
                               </button>
                             )}
+
                             {run.artifacts?.test_available && (
                               <button
                                 type="button"
-                                onClick={() => handleDownload(run.run_id, "test")}
+                                onClick={() =>
+                                  handleDownload(run.run_id, "test")
+                                }
                                 className="text-orange hover:underline"
                               >
                                 Test

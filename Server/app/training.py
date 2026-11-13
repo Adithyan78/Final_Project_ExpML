@@ -58,15 +58,14 @@ async def download_gridfs_file(bucket, file_id, destination: Path):
 async def upload_training_artifact(
     bucket,
     source: Path,
+    relative_name: str,
     owner_id: ObjectId,
     dataset_id: ObjectId,
     preprocessing_run_id: ObjectId,
     training_run_id: ObjectId,
 ):
-    relative_name = source.name
-
     return await bucket.upload_from_stream(
-        f"{training_run_id}_{relative_name}",
+        f"{training_run_id}_{Path(relative_name).name}",
         source.read_bytes(),
         metadata={
             "owner_id": str(owner_id),
@@ -74,6 +73,7 @@ async def upload_training_artifact(
             "preprocessing_run_id": str(preprocessing_run_id),
             "training_run_id": str(training_run_id),
             "artifact_type": "automl_training_artifact",
+            "relative_path": relative_name,
         },
     )
 
@@ -129,11 +129,6 @@ async def execute_training(
                 bucket, test_file_id, input_dir / "test_processed.csv"
             )
 
-            # Supply the original dataset analysis profile.
-            profile = dataset.get("profile")
-            print("\n========== DATASET PROFILE ==========")
-            print(json.dumps(json_safe(profile), indent=2))
-            print("=====================================\n")
 
             if not isinstance(profile, dict):
                 raise ValueError("Dataset analysis profile is unavailable.")
@@ -177,9 +172,11 @@ async def execute_training(
                 raise RuntimeError("AutoML Trainer produced no artifacts.")
 
             for path in artifact_paths:
+                relative_name = path.relative_to(output_dir).as_posix()
                 file_id = await upload_training_artifact(
                     bucket,
                     path,
+                    relative_name,
                     owner_id,
                     preprocessing_run["dataset_id"],
                     preprocessing_run["_id"],
@@ -347,6 +344,32 @@ async def get_training_run(
         "artifacts": list(run.get("artifacts", {}).keys()),
     }
 
+@router.get("/runs/{training_run_id}/artifacts")
+async def get_training_artifacts(
+    training_run_id: str,
+    user: dict = Depends(current_user),
+):
+    if not ObjectId.is_valid(training_run_id):
+        raise HTTPException(status_code=404, detail="Training run not found.")
+
+    run = await get_training_runs_collection().find_one({
+        "_id": ObjectId(training_run_id),
+        "owner_id": ObjectId(user["id"]),
+    })
+
+    if not run:
+        raise HTTPException(status_code=404, detail="Training run not found.")
+
+    if run.get("status") != "completed":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Training is {run.get('status')}.",
+        )
+
+    return {
+        "training_run_id": training_run_id,
+        "artifacts": list(run.get("artifacts", {}).keys()),
+    }
 
 @router.get("/runs/{training_run_id}/leaderboard")
 async def get_training_leaderboard(
@@ -376,36 +399,18 @@ async def get_training_leaderboard(
     }
 
 
-@router.get("/runs/{training_run_id}/artifacts")
-async def list_training_artifacts(
-    training_run_id: str,
-    user: dict = Depends(current_user),
-):
-    if not ObjectId.is_valid(training_run_id):
-        raise HTTPException(status_code=404, detail="Training run not found.")
 
-    run = await get_training_runs_collection().find_one({
-        "_id": ObjectId(training_run_id),
-        "owner_id": ObjectId(user["id"]),
-    })
-
-    if not run:
-        raise HTTPException(status_code=404, detail="Training run not found.")
-
-    return {
-        "training_run_id": training_run_id,
-        "artifacts": list(run.get("artifacts", {}).keys()),
-    }
-
-
-@router.get("/runs/{training_run_id}/artifacts/{filename}")
+@router.get("/runs/{training_run_id}/artifacts/download")
 async def download_training_artifact(
     training_run_id: str,
-    filename: str,
+    artifact_path: str,
     user: dict = Depends(current_user),
 ):
     if not ObjectId.is_valid(training_run_id):
-        raise HTTPException(status_code=404, detail="Training run not found.")
+        raise HTTPException(
+            status_code=404,
+            detail="Training run not found.",
+        )
 
     run = await get_training_runs_collection().find_one({
         "_id": ObjectId(training_run_id),
@@ -413,12 +418,18 @@ async def download_training_artifact(
     })
 
     if not run:
-        raise HTTPException(status_code=404, detail="Training run not found.")
+        raise HTTPException(
+            status_code=404,
+            detail="Training run not found.",
+        )
 
-    file_id = run.get("artifacts", {}).get(filename)
+    file_id = run.get("artifacts", {}).get(artifact_path)
 
     if not file_id:
-        raise HTTPException(status_code=404, detail="Artifact not found.")
+        raise HTTPException(
+            status_code=404,
+            detail="Artifact not found.",
+        )
 
     try:
         stream = await get_gridfs_bucket().open_download_stream(file_id)
@@ -434,6 +445,11 @@ async def download_training_artifact(
         BytesIO(contents),
         media_type="application/octet-stream",
         headers={
-            "Content-Disposition": f'attachment; filename="{Path(filename).name}"'
+            "Content-Disposition": (
+                f'attachment; filename="{Path(artifact_path).name}"'
+            )
         },
     )
+
+
+

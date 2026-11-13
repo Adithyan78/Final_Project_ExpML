@@ -39,8 +39,8 @@ const NAV_SECTIONS = [
   {
     heading: "Pipeline",
     items: [
+      { label: "Analyzes", path: ROUTES.TRAINING, icon: "Cpu" },
       { label: "Preprocessing", path: ROUTES.PREPROCESSING, icon: "Workflow" },
-      { label: "Training", path: ROUTES.TRAINING, icon: "Cpu" },
       { label: "Models", path: ROUTES.COMPARISON, icon: "BarChart3" },
       { label: "Explainability", path: ROUTES.EXPLAINABILITY, icon: "Lightbulb" },
     ],
