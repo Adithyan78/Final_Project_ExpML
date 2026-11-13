@@ -66,7 +66,10 @@ function MetricCard({ label, value, icon: Icon }) {
 
 export default function ModelComparisonPage() {
   const location = useLocation();
-  const trainingRunId = location.state?.trainingRunId;
+
+  const trainingRunId =
+    location.state?.trainingRunId ||
+    sessionStorage.getItem("latestTrainingRunId");
 
   const [run, setRun] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -81,15 +84,18 @@ export default function ModelComparisonPage() {
 
   useEffect(() => {
     let active = true;
+    let pollTimer;
 
-    async function loadResults() {
+    async function loadResults(isPolling = false) {
       if (!trainingRunId) {
         setLoading(false);
-        setError("No training run was selected. Start training to view its results.");
+        setError(
+          "No training run was selected. Start training to view its results."
+        );
         return;
       }
 
-      setLoading(true);
+      if (!isPolling) setLoading(true);
       setError("");
 
       try {
@@ -101,8 +107,13 @@ export default function ModelComparisonPage() {
 
         if (runData.status === "completed") {
           const [leaderboardData, artifactData] = await Promise.all([
-            getTrainingLeaderboard(trainingRunId),
-            getTrainingArtifacts(trainingRunId),
+            Array.isArray(runData.leaderboard)
+              ? Promise.resolve({ leaderboard: runData.leaderboard })
+              : getTrainingLeaderboard(trainingRunId),
+
+            Array.isArray(runData.artifacts)
+              ? Promise.resolve({ artifacts: runData.artifacts })
+              : getTrainingArtifacts(trainingRunId),
           ]);
 
           if (!active) return;
@@ -112,6 +123,15 @@ export default function ModelComparisonPage() {
         } else {
           setLeaderboard([]);
           setArtifacts([]);
+
+          if (
+            runData.status === "pending" ||
+            runData.status === "running"
+          ) {
+            pollTimer = window.setTimeout(() => {
+              if (active) loadResults(true);
+            }, 2500);
+          }
         }
       } catch (err) {
         if (active) {
@@ -129,6 +149,7 @@ export default function ModelComparisonPage() {
 
     return () => {
       active = false;
+      if (pollTimer) window.clearTimeout(pollTimer);
     };
   }, [trainingRunId, refreshKey]);
 
@@ -149,8 +170,12 @@ export default function ModelComparisonPage() {
   };
 
   const summary = run?.summary || {};
-  const primaryMetric = summary.primary_metric || run?.primary_metric || "";
-  const bestModel = summary.best_model || run?.best_model || "—";
+
+  const primaryMetric =
+    summary.primary_metric || run?.primary_metric || "";
+
+  const bestModel =
+    summary.best_model || run?.best_model || "—";
 
   const bestRow =
     leaderboard.find((row) => row.algorithm === bestModel) ||
@@ -164,10 +189,15 @@ export default function ModelComparisonPage() {
     return (
       <AppShell>
         <Card className="flex flex-col items-center justify-center py-16">
-          <RefreshCw size={22} className="animate-spin text-orange mb-3" />
+          <RefreshCw
+            size={22}
+            className="animate-spin text-orange mb-3"
+          />
+
           <p className="text-sm font-medium text-ink">
             Loading model results...
           </p>
+
           <p className="text-xs text-ink-secondary mt-1">
             Retrieving your training run.
           </p>
@@ -180,11 +210,19 @@ export default function ModelComparisonPage() {
     return (
       <AppShell>
         <Card className="p-6 text-center">
-          <AlertTriangle size={24} className="mx-auto text-red-500 mb-3" />
+          <AlertTriangle
+            size={24}
+            className="mx-auto text-red-500 mb-3"
+          />
+
           <h2 className="text-sm font-semibold text-ink">
             Unable to load results
           </h2>
-          <p className="text-xs text-ink-secondary mt-2">{error}</p>
+
+          <p className="text-xs text-ink-secondary mt-2">
+            {error}
+          </p>
+
           <button
             onClick={handleRefresh}
             className="mt-4 px-4 py-2 rounded-lg bg-orange text-white text-xs"
@@ -199,12 +237,14 @@ export default function ModelComparisonPage() {
   return (
     <AppShell>
       <div className="space-y-6">
+
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold text-ink">
               Model Results
             </h1>
+
             <p className="text-xs text-ink-secondary mt-1">
               Compare model performance and inspect your AutoML run.
             </p>
@@ -228,14 +268,16 @@ export default function ModelComparisonPage() {
           <Card className="p-5">
             <div className="flex items-start gap-3">
               <Activity size={20} className="text-orange mt-1" />
+
               <div>
                 <h2 className="text-sm font-semibold text-ink">
                   Training {run?.status || "unknown"}
                 </h2>
+
                 <p className="text-xs text-ink-secondary mt-1">
                   {run?.status === "failed"
                     ? run.error || "Training failed."
-                    : "Your model results will appear here when training completes. Refresh to check the latest status."}
+                    : "Your model results will appear here when training completes. This page checks automatically."}
                 </p>
               </div>
             </div>
@@ -267,6 +309,7 @@ export default function ModelComparisonPage() {
                   <p className="text-xs text-ink-secondary">
                     Best cross-validation score
                   </p>
+
                   <p className="text-3xl font-semibold text-orange mt-1">
                     {formatMetric(
                       summary.best_cv_score ??
@@ -285,16 +328,23 @@ export default function ModelComparisonPage() {
                 value={summary.models_screened ?? "—"}
                 icon={BarChart3}
               />
+
               <MetricCard
                 label="Finalists"
-                value={summary.finalists ?? "—"}
+                value={
+                  summary.models_finalists ??
+                  summary.finalists ??
+                  "—"
+                }
                 icon={Trophy}
               />
+
               <MetricCard
                 label="Training duration"
                 value={formatDuration(summary.total_time_s)}
                 icon={Clock3}
               />
+
               <MetricCard
                 label="Features"
                 value={summary.n_features ?? "—"}
@@ -317,21 +367,27 @@ export default function ModelComparisonPage() {
                 </div>
 
                 <div>
-                  <p className="text-xs text-ink-secondary">Primary metric</p>
+                  <p className="text-xs text-ink-secondary">
+                    Primary metric
+                  </p>
                   <p className="text-sm font-medium text-ink mt-1">
                     {formatLabel(primaryMetric || "—")}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-ink-secondary">Training rows</p>
+                  <p className="text-xs text-ink-secondary">
+                    Training rows
+                  </p>
                   <p className="text-sm font-medium text-ink mt-1">
                     {summary.n_train ?? "—"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-ink-secondary">Test rows</p>
+                  <p className="text-xs text-ink-secondary">
+                    Test rows
+                  </p>
                   <p className="text-sm font-medium text-ink mt-1">
                     {summary.n_test ?? "—"}
                   </p>
@@ -346,6 +402,7 @@ export default function ModelComparisonPage() {
                   <h2 className="text-sm font-semibold text-ink">
                     Model leaderboard
                   </h2>
+
                   <p className="text-xs text-ink-secondary mt-1">
                     Models ranked by the AutoML selection process.
                   </p>
@@ -368,9 +425,11 @@ export default function ModelComparisonPage() {
                         <th className="py-3 pr-4">Rank</th>
                         <th className="py-3 pr-4">Model</th>
                         <th className="py-3 pr-4">Family</th>
+
                         <th className="py-3 pr-4">
                           CV {formatLabel(primaryMetric)}
                         </th>
+
                         <th className="py-3 pr-4">Test score</th>
                         <th className="py-3 pr-4">Overfit gap</th>
                         <th className="py-3 pr-4">Training time</th>
@@ -397,6 +456,7 @@ export default function ModelComparisonPage() {
 
                             <td className="py-3 pr-4 font-medium text-ink">
                               {row.algorithm || "Unknown"}
+
                               {row.tuned && (
                                 <span className="ml-2 text-[10px] text-orange">
                                   Tuned
@@ -410,6 +470,7 @@ export default function ModelComparisonPage() {
 
                             <td className="py-3 pr-4 text-ink">
                               {formatMetric(cvScore, primaryMetric)}
+
                               <span className="block text-[10px] text-ink-secondary mt-1">
                                 ±{" "}
                                 {formatMetric(
@@ -461,6 +522,7 @@ export default function ModelComparisonPage() {
                 <h2 className="text-sm font-semibold text-ink">
                   Best model evaluation
                 </h2>
+
                 <p className="text-xs text-ink-secondary mt-1 mb-4">
                   Held-out test metrics for {bestRow.algorithm}.
                 </p>
@@ -471,6 +533,7 @@ export default function ModelComparisonPage() {
                       <p className="text-xs text-ink-secondary">
                         {formatLabel(metric)}
                       </p>
+
                       <p className="text-lg font-semibold text-ink mt-1">
                         {formatMetric(value, metric)}
                       </p>
@@ -484,7 +547,11 @@ export default function ModelComparisonPage() {
             {warnings.length > 0 && (
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle size={17} className="text-amber-500" />
+                  <AlertTriangle
+                    size={17}
+                    className="text-amber-500"
+                  />
+
                   <h2 className="text-sm font-semibold text-ink">
                     Training diagnostics
                   </h2>
@@ -508,6 +575,7 @@ export default function ModelComparisonPage() {
               <h2 className="text-sm font-semibold text-ink">
                 Training artifacts
               </h2>
+
               <p className="text-xs text-ink-secondary mt-1 mb-4">
                 Download files generated during this training run.
               </p>
@@ -535,6 +603,7 @@ export default function ModelComparisonPage() {
                         className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-xs text-ink hover:bg-surface-secondary disabled:opacity-50"
                       >
                         <Download size={14} />
+
                         {downloading === artifact
                           ? "Downloading..."
                           : "Download"}

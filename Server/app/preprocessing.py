@@ -251,6 +251,7 @@ async def preprocess_dataset(
     }
 
     json_reports = {
+        "dataset_profile.json": ("dataset_profile", profile),
         "preprocessing_summary.json": ("preprocessing_summary", summary_report),
         "preprocessing_log.json": ("preprocessing_log", log_report),
         "feature_provenance.json": ("feature_provenance", provenance_report),

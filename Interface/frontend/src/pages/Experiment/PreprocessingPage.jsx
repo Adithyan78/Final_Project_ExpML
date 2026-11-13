@@ -11,18 +11,74 @@ import {
   AlertCircle,
   Database,
   LoaderCircle,
+  ArrowRight,
+  AlertTriangle,
+  Settings2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 import AppShell from "../../components/layout/AppShell";
 import Card from "../../components/common/Card";
 import Button from "../../components/common/Button";
+
 import { getDatasets, getDataset } from "../../services/datasets";
 import request, { BASE_URL } from "../../services/api";
+
 import {
   preprocessDataset,
   getPreprocessingRuns,
   downloadPreprocessedCSV,
 } from "../../services/preprocessing";
+
+import {
+  startTraining,
+  getTrainingRun,
+} from "../../services/training";
+
+const TRAINING_TERMINAL_STATUSES = [
+  "completed",
+  "failed",
+  "cancelled",
+];
+
+const DEFAULT_TRAINING_CONFIG = {
+  task: "auto",
+  primary_metric: null,
+  cv_splits: 5,
+  cv_repeats: 1,
+  random_state: 42,
+  n_jobs: -1,
+  max_candidates: 10,
+  exclude: [],
+  include_only: [],
+  screening_max_rows: 5000,
+  screening_folds: 3,
+  keep_fraction: 0.5,
+  keep_min: 3,
+  time_budget_s: null,
+  tune: false,
+  tune_top_n: 3,
+  tune_iterations: 30,
+  ensemble: true,
+  ensemble_top_k: 3,
+  ensemble_min_gain: 0.005,
+  refit_on_all: false,
+  overfit_gap_warn: 0.10,
+};
+
+const MODEL_OPTIONS = [
+  "RandomForest",
+  "GradientBoosting",
+  "HistGradientBoosting",
+  "LogisticRegression",
+  "ExtraTrees",
+  "DecisionTree",
+  "GaussianNB",
+  "SVC",
+  "AdaBoost",
+  "KNN",
+];
 
 function DonutChart({
   segments,
@@ -64,7 +120,8 @@ function DonutChart({
             .filter((segment) => segment.value > 0)
             .map((segment, index) => {
               const length =
-                (segment.value / Math.max(total, 1)) * circumference;
+                (segment.value / Math.max(total, 1)) *
+                circumference;
 
               const circle = (
                 <circle
@@ -109,7 +166,8 @@ function DonutChart({
                 className="h-2.5 w-2.5 rounded-full"
                 style={{
                   backgroundColor:
-                    segment.color || colors[index % colors.length],
+                    segment.color ||
+                    colors[index % colors.length],
                 }}
               />
               {segment.label}
@@ -132,6 +190,39 @@ function DonutChart({
   );
 }
 
+function NumberField({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  help,
+}) {
+  return (
+    <label className="space-y-2 text-sm">
+      <span className="font-medium text-ink">{label}</span>
+      <input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(event) => {
+          const next = event.target.value;
+          onChange(next === "" ? "" : Number(next));
+        }}
+        className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
+      />
+      {help && (
+        <span className="block text-xs text-ink-muted">
+          {help}
+        </span>
+      )}
+    </label>
+  );
+}
+
 export default function PreprocessingPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -145,13 +236,16 @@ export default function PreprocessingPage() {
   const [testSize, setTestSize] = useState("0.2");
   const [runs, setRuns] = useState([]);
   const [result, setResult] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
   const [logSearch, setLogSearch] = useState("");
   const [logFilter, setLogFilter] = useState("All");
   const [expandedLogs, setExpandedLogs] = useState({});
+
   const [reports, setReports] = useState({});
   const [activeReport, setActiveReport] = useState(
     "preprocessing_summary.json"
@@ -160,52 +254,73 @@ export default function PreprocessingPage() {
   const [reportsError, setReportsError] = useState("");
   const [insightTab, setInsightTab] = useState("overview");
 
+  // AutoML configuration
+  const [trainingConfig, setTrainingConfig] = useState({
+    ...DEFAULT_TRAINING_CONFIG,
+  });
+
+  const [advancedSettingsOpen, setAdvancedSettingsOpen] =
+    useState(false);
+
+  const [startingTraining, setStartingTraining] = useState(false);
+  const [trainingRunId, setTrainingRunId] = useState("");
+  const [trainingStatus, setTrainingStatus] = useState("");
+  const [trainingError, setTrainingError] = useState("");
+
   const columns = Object.keys(profile?.columns ?? {});
 
-  const preprocessingLogs = Array.isArray(result?.preprocessing_log)
+  const preprocessingLogs = Array.isArray(
+    result?.preprocessing_log
+  )
     ? result.preprocessing_log
     : [];
 
-  const visiblePreprocessingLogs = preprocessingLogs.filter((item) => {
-    const log =
-      item && typeof item === "object"
-        ? item
-        : { message: item };
+  const visiblePreprocessingLogs = preprocessingLogs.filter(
+    (item) => {
+      const log =
+        item && typeof item === "object"
+          ? item
+          : { message: item };
 
-    const action = String(log.action ?? "").toLowerCase();
+      const action = String(log.action ?? "").toLowerCase();
 
-    const text = [
-      log.column,
-      log.stage,
-      log.action,
-      log.reason,
-      log.rule_id,
-      log.source,
-      log.message,
-      typeof item === "string" ? item : "",
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+      const text = [
+        log.column,
+        log.stage,
+        log.action,
+        log.reason,
+        log.rule_id,
+        log.source,
+        log.message,
+        typeof item === "string" ? item : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-    let category = "Other";
+      let category = "Other";
 
-    if (action.includes("drop")) category = "Dropped";
-    else if (action.includes("imput")) category = "Missing values";
-    else if (action.includes("encod")) category = "Encoding";
-    else if (action.includes("scal")) category = "Scaling";
-    else if (
-      action === "skipped" ||
-      log.source === "system"
-    ) {
-      category = "System";
+      if (action.includes("drop")) {
+        category = "Dropped";
+      } else if (action.includes("imput")) {
+        category = "Missing values";
+      } else if (action.includes("encod")) {
+        category = "Encoding";
+      } else if (action.includes("scal")) {
+        category = "Scaling";
+      } else if (
+        action === "skipped" ||
+        log.source === "system"
+      ) {
+        category = "System";
+      }
+
+      return (
+        (logFilter === "All" || category === logFilter) &&
+        text.includes(logSearch.trim().toLowerCase())
+      );
     }
-
-    return (
-      (logFilter === "All" || category === logFilter) &&
-      text.includes(logSearch.trim().toLowerCase())
-    );
-  });
+  );
 
   const logSummary = {
     columns: new Set(
@@ -244,6 +359,22 @@ export default function PreprocessingPage() {
     ).length,
   };
 
+  const updateTrainingConfig = (key, value) => {
+    setTrainingConfig((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  };
+
+  const toggleModel = (key, model) => {
+    setTrainingConfig((current) => ({
+      ...current,
+      [key]: current[key].includes(model)
+        ? current[key].filter((item) => item !== model)
+        : [...current[key], model],
+    }));
+  };
+
   const loadRuns = useCallback(async (id) => {
     if (!id) {
       setRuns([]);
@@ -263,6 +394,11 @@ export default function PreprocessingPage() {
       setTarget("");
       setError("");
       setNotice("");
+
+      setTrainingRunId("");
+      setTrainingStatus("");
+      setTrainingError("");
+      setTrainingConfig({ ...DEFAULT_TRAINING_CONFIG });
 
       if (!id) {
         setRuns([]);
@@ -374,7 +510,8 @@ export default function PreprocessingPage() {
     } catch (err) {
       setReports({});
       setReportsError(
-        err.message || "Could not load JSON reports for this run."
+        err.message ||
+          "Could not load JSON reports for this run."
       );
     } finally {
       setReportsLoading(false);
@@ -397,12 +534,11 @@ export default function PreprocessingPage() {
 
         try {
           const data = await response.json();
-
           if (typeof data.detail === "string") {
             message = data.detail;
           }
         } catch {
-          // Keep the HTTP status message.
+          // Keep HTTP status message.
         }
 
         throw new Error(message);
@@ -414,19 +550,18 @@ export default function PreprocessingPage() {
 
       link.href = url;
       link.download = filename;
-
       document.body.appendChild(link);
       link.click();
       link.remove();
 
       URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.message || "Could not download the JSON report.");
+      setError(
+        err.message || "Could not download the JSON report."
+      );
     }
   }
 
-  // FIXED: Single handler. The API call is no longer trapped
-  // inside an unused nested function.
   async function handlePreprocess() {
     if (!datasetId) {
       setError("Choose a dataset first.");
@@ -443,6 +578,10 @@ export default function PreprocessingPage() {
     setNotice("");
     setResult(null);
     setReports({});
+
+    setTrainingRunId("");
+    setTrainingStatus("");
+    setTrainingError("");
 
     try {
       const response = await preprocessDataset(datasetId, {
@@ -477,7 +616,8 @@ export default function PreprocessingPage() {
     }
   }
 
-  function handleContinueToTraining() {
+  // Start AutoML using the existing backend TrainingConfig.
+  async function handleStartTraining() {
     const preprocessingRunId =
       result?.run_id ?? result?.preprocessing_run_id;
 
@@ -488,11 +628,133 @@ export default function PreprocessingPage() {
       return;
     }
 
-    navigate(ROUTES.TRAINING, {
+    if (
+      startingTraining ||
+      (trainingRunId &&
+        !["failed", "cancelled"].includes(trainingStatus))
+    ) {
+      return;
+    }
+
+    setError("");
+    setTrainingError("");
+    setTrainingStatus("submitting");
+    setStartingTraining(true);
+
+    try {
+      const config = {
+        ...trainingConfig,
+        primary_metric: trainingConfig.primary_metric || null,
+        time_budget_s:
+          trainingConfig.time_budget_s === "" ||
+          trainingConfig.time_budget_s === null
+            ? null
+            : Number(trainingConfig.time_budget_s),
+      };
+
+      const response = await startTraining(
+        preprocessingRunId,
+        config
+      );
+
+      const id =
+        response?.training_run_id ??
+        response?.run_id ??
+        response?.id;
+
+      if (!id) {
+        throw new Error(
+          "The backend did not return a training run ID."
+        );
+      }
+
+      setTrainingRunId(id);
+
+      window.sessionStorage.setItem(
+        "autoexplainai:lastTrainingRunId",
+        id
+      );
+
+      setTrainingStatus(
+        String(response?.status ?? "pending").toLowerCase()
+      );
+    } catch (err) {
+      setTrainingStatus("failed");
+      setTrainingError(
+        err.message || "Could not start AutoML training."
+      );
+    } finally {
+      setStartingTraining(false);
+    }
+  }
+
+  // Poll backend training status.
+  useEffect(() => {
+    if (!trainingRunId) return undefined;
+
+    let cancelled = false;
+    let timeoutId;
+
+    async function pollTraining() {
+      try {
+        const response = await getTrainingRun(trainingRunId);
+
+        if (cancelled) return;
+
+        const status = String(
+          response?.status ?? "running"
+        ).toLowerCase();
+
+        setTrainingStatus(status);
+
+        if (TRAINING_TERMINAL_STATUSES.includes(status)) {
+          setTrainingError(
+            status === "failed"
+              ? response?.error || "Training failed."
+              : ""
+          );
+          return;
+        }
+
+        setTrainingError("");
+      } catch (err) {
+        if (!cancelled) {
+          setTrainingError(
+            err.message ||
+              "Could not retrieve training status."
+          );
+        }
+      }
+
+      if (!cancelled) {
+        timeoutId = window.setTimeout(pollTraining, 2500);
+      }
+    }
+
+    pollTraining();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [trainingRunId]);
+
+  function handleContinueToComparison() {
+    const preprocessingRunId =
+      result?.run_id ?? result?.preprocessing_run_id;
+
+    if (!datasetId || !preprocessingRunId || !trainingRunId) {
+      setError(
+        "A completed training run is required before opening model comparison."
+      );
+      return;
+    }
+
+    navigate(ROUTES.COMPARISON, {
       state: {
         datasetId,
         preprocessingRunId,
-        targetColumn: target,
+        trainingRunId,
       },
     });
   }
@@ -500,6 +762,31 @@ export default function PreprocessingPage() {
   const activeDataset = datasets.find(
     (item) => item.id === datasetId
   );
+
+  const trainingIsActive = [
+    "submitting",
+    "pending",
+    "queued",
+    "running",
+    "in_progress",
+  ].includes(trainingStatus);
+
+  const metricOptions =
+    trainingConfig.task === "classification"
+      ? [
+          ["accuracy", "Accuracy"],
+          ["f1", "F1"],
+          ["roc_auc", "ROC-AUC"],
+          ["precision", "Precision"],
+          ["recall", "Recall"],
+        ]
+      : trainingConfig.task === "regression"
+        ? [
+            ["r2", "R²"],
+            ["neg_mean_squared_error", "Mean squared error"],
+            ["neg_mean_absolute_error", "Mean absolute error"],
+          ]
+        : [];
 
   return (
     <AppShell>
@@ -516,7 +803,8 @@ export default function PreprocessingPage() {
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-secondary">
             Prepare your dataset, select a target, review feature
-            selection, and download the processed training and testing data.
+            selection, and download the processed training and
+            testing data.
           </p>
         </div>
 
@@ -556,7 +844,6 @@ export default function PreprocessingPage() {
               <div className="grid gap-5 md:grid-cols-3">
                 <label className="space-y-2 text-sm">
                   <span className="font-medium text-ink">Dataset</span>
-
                   <select
                     value={datasetId}
                     onChange={(event) =>
@@ -576,14 +863,12 @@ export default function PreprocessingPage() {
                   <span className="font-medium text-ink">
                     Target column
                   </span>
-
                   <select
                     value={target}
                     onChange={(event) => setTarget(event.target.value)}
                     className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
                   >
                     <option value="">Select target</option>
-
                     {columns.map((column) => (
                       <option key={column} value={column}>
                         {column}
@@ -593,10 +878,7 @@ export default function PreprocessingPage() {
                 </label>
 
                 <label className="space-y-2 text-sm">
-                  <span className="font-medium text-ink">
-                    Test split
-                  </span>
-
+                  <span className="font-medium text-ink">Test split</span>
                   <select
                     value={testSize}
                     onChange={(event) => setTestSize(event.target.value)}
@@ -624,14 +906,10 @@ export default function PreprocessingPage() {
                 disabled={loading || running || !datasetId || !target}
               >
                 {running ? (
-                  <LoaderCircle
-                    size={16}
-                    className="mr-2 animate-spin"
-                  />
+                  <LoaderCircle size={16} className="mr-2 animate-spin" />
                 ) : (
                   <Play size={16} className="mr-2" />
                 )}
-
                 {running ? "Preprocessing..." : "Run preprocessing"}
               </Button>
 
@@ -653,7 +931,6 @@ export default function PreprocessingPage() {
               <h2 className="text-lg font-semibold text-ink">
                 Latest preprocessing results
               </h2>
-
               <p className="mt-1 text-sm text-ink-secondary">
                 Run ID: {result.run_id}
               </p>
@@ -664,17 +941,11 @@ export default function PreprocessingPage() {
                 ["Training rows", result.train_rows],
                 ["Testing rows", result.test_rows],
                 ["Selected features", result.feature_count],
-                [
-                  "Removed missing targets",
-                  result.rows_removed_missing_target,
-                ],
+                ["Removed missing targets", result.rows_removed_missing_target],
               ].map(([label, value]) => (
                 <Card key={label}>
                   <div className="p-5">
-                    <p className="text-sm text-ink-secondary">
-                      {label}
-                    </p>
-
+                    <p className="text-sm text-ink-secondary">{label}</p>
                     <p className="mt-2 text-2xl font-semibold text-ink">
                       {value ?? "—"}
                     </p>
@@ -689,10 +960,8 @@ export default function PreprocessingPage() {
                   <h3 className="text-lg font-semibold text-ink">
                     Preprocessing insights
                   </h3>
-
                   <p className="mt-1 text-sm text-ink-secondary">
-                    A visual explanation of the transformations and
-                    outputs for this run.
+                    A visual explanation of the transformations and outputs for this run.
                   </p>
                 </div>
 
@@ -721,32 +990,22 @@ export default function PreprocessingPage() {
                   <div className="space-y-5">
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="rounded-xl border border-surface-border p-4">
-                        <p className="text-sm text-ink-secondary">
-                          Input dataset
-                        </p>
-
+                        <p className="text-sm text-ink-secondary">Input dataset</p>
                         <p className="mt-2 text-2xl font-semibold text-ink">
-                          {profile?.row_count ??
-                            profile?.rows ??
-                            "—"}
+                          {profile?.row_count ?? profile?.rows ?? "—"}
                         </p>
-
                         <p className="text-xs text-ink-muted">
                           Rows reported by the dataset profile
                         </p>
                       </div>
 
                       <div className="rounded-xl border border-surface-border p-4">
-                        <p className="text-sm text-ink-secondary">
-                          Output features
-                        </p>
-
+                        <p className="text-sm text-ink-secondary">Output features</p>
                         <p className="mt-2 text-2xl font-semibold text-ink">
                           {result.feature_count ??
                             result.selected_features?.length ??
                             0}
                         </p>
-
                         <p className="text-xs text-ink-muted">
                           Features available for model training
                         </p>
@@ -756,11 +1015,9 @@ export default function PreprocessingPage() {
                         <p className="text-sm text-ink-secondary">
                           Logged transformations
                         </p>
-
                         <p className="mt-2 text-2xl font-semibold text-ink">
                           {preprocessingLogs.length}
                         </p>
-
                         <p className="text-xs text-ink-muted">
                           Recorded preprocessing events
                         </p>
@@ -772,7 +1029,6 @@ export default function PreprocessingPage() {
                         <h4 className="mb-4 font-medium text-ink">
                           Train/test split
                         </h4>
-
                         <DonutChart
                           segments={[
                             {
@@ -798,7 +1054,6 @@ export default function PreprocessingPage() {
                         <h4 className="mb-4 font-medium text-ink">
                           Transformation activity
                         </h4>
-
                         <DonutChart
                           segments={[
                             {
@@ -830,10 +1085,8 @@ export default function PreprocessingPage() {
                           }
                           centerLabel="Actions"
                         />
-
                         <p className="mt-3 text-xs text-ink-muted">
-                          Counts reflect logged actions; one column may
-                          have multiple events.
+                          Counts reflect logged actions; one column may have multiple events.
                         </p>
                       </div>
                     </div>
@@ -843,9 +1096,7 @@ export default function PreprocessingPage() {
                 {insightTab === "features" && (
                   <div className="space-y-3">
                     <p className="text-sm text-ink-secondary">
-                      These are the features returned by the preprocessing
-                      run. Ranking scores are shown only when available
-                      in the saved results.
+                      These are the features returned by the preprocessing run.
                     </p>
 
                     {result.selected_features?.length ? (
@@ -874,26 +1125,10 @@ export default function PreprocessingPage() {
                 {insightTab === "pipeline" && (
                   <div className="space-y-3">
                     {[
-                      [
-                        "1",
-                        "Inspect dataset",
-                        "Review the input columns and selected target.",
-                      ],
-                      [
-                        "2",
-                        "Handle missing values",
-                        `${logSummary.imputed} imputation actions recorded.`,
-                      ],
-                      [
-                        "3",
-                        "Transform features",
-                        `${logSummary.encoded} encoding and ${logSummary.scaled} scaling actions recorded.`,
-                      ],
-                      [
-                        "4",
-                        "Prepare model splits",
-                        `${result.train_rows ?? 0} training rows and ${result.test_rows ?? 0} testing rows created.`,
-                      ],
+                      ["1", "Inspect dataset", "Review the input columns and selected target."],
+                      ["2", "Handle missing values", `${logSummary.imputed} imputation actions recorded.`],
+                      ["3", "Transform features", `${logSummary.encoded} encoding and ${logSummary.scaled} scaling actions recorded.`],
+                      ["4", "Prepare model splits", `${result.train_rows ?? 0} training rows and ${result.test_rows ?? 0} testing rows created.`],
                     ].map(([step, title, description]) => (
                       <div
                         key={step}
@@ -902,7 +1137,6 @@ export default function PreprocessingPage() {
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-sm font-semibold text-orange">
                           {step}
                         </div>
-
                         <div className="min-w-0">
                           <p className="font-medium text-ink">{title}</p>
                           <p className="mt-1 text-sm text-ink-secondary">
@@ -911,44 +1145,40 @@ export default function PreprocessingPage() {
                         </div>
                       </div>
                     ))}
-
-                    <p className="text-xs text-ink-muted">
-                      For the exact per-column reasons and rules,
-                      expand the detailed preprocessing log below.
-                    </p>
                   </div>
                 )}
               </div>
             </Card>
 
+            {/* Selected features and AutoML */}
             <Card>
-              <div className="space-y-4 p-5">
-                <h3 className="font-semibold text-ink">
-                  Selected features
-                </h3>
+              <div className="space-y-5 p-5">
+                <div>
+                  <h3 className="font-semibold text-ink">
+                    Selected features
+                  </h3>
 
-                {result.selected_features?.length ? (
-                  <div className="flex flex-wrap gap-2">
-                    {result.selected_features.map((feature) => (
-                      <span
-                        key={feature}
-                        className="rounded-full bg-orange-50 px-3 py-1 text-sm text-orange"
-                      >
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-ink-secondary">
-                    No selected features were returned.
-                  </p>
-                )}
+                  {result.selected_features?.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {result.selected_features.map((feature) => (
+                        <span
+                          key={feature}
+                          className="rounded-full bg-orange-50 px-3 py-1 text-sm text-orange"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-ink-secondary">
+                      No selected features were returned.
+                    </p>
+                  )}
+                </div>
 
                 <div className="flex flex-wrap gap-3">
                   <Button
-                    onClick={() =>
-                      handleDownload(result.run_id, "train")
-                    }
+                    onClick={() => handleDownload(result.run_id, "train")}
                   >
                     <Download size={16} className="mr-2" />
                     Download training CSV
@@ -956,39 +1186,498 @@ export default function PreprocessingPage() {
 
                   <Button
                     variant="secondary"
-                    onClick={() =>
-                      handleDownload(result.run_id, "test")
-                    }
+                    onClick={() => handleDownload(result.run_id, "test")}
                   >
                     <Download size={16} className="mr-2" />
                     Download testing CSV
                   </Button>
+                </div>
 
-                  {/* <Button
-                    onClick={handleContinueToTraining}
-                    disabled={
-                      !result?.run_id &&
-                      !result?.preprocessing_run_id
-                    }
-                  >
-                    <Workflow size={16} className="mr-2" />
-                    Continue to Model Comparisson
-                  </Button> */}
+                <div className="border-t border-surface-border pt-5">
+                  <div className="mb-5">
+                    <div className="flex items-center gap-2">
+                      <Workflow size={19} className="text-orange" />
+                      <h3 className="font-semibold text-ink">
+                        AutoML configuration
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-ink-secondary">
+                      Configure how AutoExplainAI evaluates candidate models,
+                      tunes hyperparameters, and selects an appropriate model.
+                    </p>
+                  </div>
+
+                  {/* Basic settings */}
+                  <div className="space-y-5">
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <label className="space-y-2 text-sm">
+                        <span className="font-medium text-ink">
+                          Learning objective
+                        </span>
+                        <select
+                          value={trainingConfig.task}
+                          onChange={(event) => {
+                            const task = event.target.value;
+                            updateTrainingConfig("task", task);
+                            updateTrainingConfig("primary_metric", null);
+                          }}
+                          disabled={startingTraining || Boolean(trainingRunId)}
+                          className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange disabled:opacity-50"
+                        >
+                          <option value="auto">Auto-detect</option>
+                          <option value="classification">Classification</option>
+                          <option value="regression">Regression</option>
+                        </select>
+                        <span className="block text-xs text-ink-muted">
+                          Automatically infer the task from the target column or select it manually.
+                        </span>
+                      </label>
+
+                      <label className="space-y-2 text-sm">
+                        <span className="font-medium text-ink">
+                          Primary evaluation metric
+                        </span>
+                        <select
+                          value={trainingConfig.primary_metric ?? ""}
+                          onChange={(event) =>
+                            updateTrainingConfig(
+                              "primary_metric",
+                              event.target.value || null
+                            )
+                          }
+                          disabled={
+                            startingTraining ||
+                            Boolean(trainingRunId) ||
+                            trainingConfig.task === "auto"
+                          }
+                          className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange disabled:opacity-50"
+                        >
+                          <option value="">Automatic selection</option>
+                          {metricOptions.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="block text-xs text-ink-muted">
+                          Metric options depend on the selected learning objective.
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="flex items-start gap-3 rounded-xl border border-surface-border p-4">
+                        <input
+                          type="checkbox"
+                          checked={trainingConfig.tune}
+                          onChange={(event) =>
+                            updateTrainingConfig("tune", event.target.checked)
+                          }
+                          disabled={startingTraining || Boolean(trainingRunId)}
+                          className="mt-1 accent-orange"
+                        />
+                        <span>
+                          <span className="block text-sm font-medium text-ink">
+                            Hyperparameter tuning
+                          </span>
+                          <span className="mt-1 block text-xs text-ink-muted">
+                            Search for better model configurations.
+                          </span>
+                        </span>
+                      </label>
+
+                      <label className="flex items-start gap-3 rounded-xl border border-surface-border p-4">
+                        <input
+                          type="checkbox"
+                          checked={trainingConfig.ensemble}
+                          onChange={(event) =>
+                            updateTrainingConfig("ensemble", event.target.checked)
+                          }
+                          disabled={startingTraining || Boolean(trainingRunId)}
+                          className="mt-1 accent-orange"
+                        />
+                        <span>
+                          <span className="block text-sm font-medium text-ink">
+                            Ensemble evaluation
+                          </span>
+                          <span className="mt-1 block text-xs text-ink-muted">
+                            Evaluate combinations of top-performing models.
+                          </span>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <NumberField
+                        label="Time budget (seconds)"
+                        value={trainingConfig.time_budget_s ?? ""}
+                        min={1}
+                        onChange={(value) =>
+                          updateTrainingConfig("time_budget_s", value)
+                        }
+                        help="Leave empty for no time limit."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Advanced settings */}
+                  <div className="mt-6 overflow-hidden rounded-xl border border-surface-border">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAdvancedSettingsOpen((value) => !value)
+                      }
+                      aria-expanded={advancedSettingsOpen}
+                      className="flex w-full items-center justify-between gap-3 bg-surface-page p-4 text-left"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Settings2 size={18} className="text-orange" />
+                        <span>
+                          <span className="block text-sm font-semibold text-ink">
+                            Advanced settings
+                          </span>
+                          <span className="mt-1 block text-xs text-ink-muted">
+                            Fine-tune model selection and evaluation.
+                          </span>
+                        </span>
+                      </span>
+                      {advancedSettingsOpen ? (
+                        <ChevronUp size={18} />
+                      ) : (
+                        <ChevronDown size={18} />
+                      )}
+                    </button>
+
+                    {advancedSettingsOpen && (
+                      <div className="space-y-6 p-4">
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold text-ink">
+                            Cross-validation and candidate selection
+                          </h4>
+                          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <NumberField
+                              label="CV folds"
+                              value={trainingConfig.cv_splits}
+                              min={2}
+                              onChange={(value) =>
+                                updateTrainingConfig("cv_splits", value)
+                              }
+                            />
+                            <NumberField
+                              label="CV repeats"
+                              value={trainingConfig.cv_repeats}
+                              min={1}
+                              onChange={(value) =>
+                                updateTrainingConfig("cv_repeats", value)
+                              }
+                            />
+                            <NumberField
+                              label="Maximum candidates"
+                              value={trainingConfig.max_candidates}
+                              min={1}
+                              onChange={(value) =>
+                                updateTrainingConfig("max_candidates", value)
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold text-ink">
+                            Hyperparameter tuning
+                          </h4>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <NumberField
+                              label="Top models to tune"
+                              value={trainingConfig.tune_top_n}
+                              min={0}
+                              onChange={(value) =>
+                                updateTrainingConfig("tune_top_n", value)
+                              }
+                            />
+                            <NumberField
+                              label="Tuning iterations"
+                              value={trainingConfig.tune_iterations}
+                              min={1}
+                              onChange={(value) =>
+                                updateTrainingConfig("tune_iterations", value)
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold text-ink">
+                            Ensemble configuration
+                          </h4>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <NumberField
+                              label="Ensemble top K"
+                              value={trainingConfig.ensemble_top_k}
+                              min={1}
+                              onChange={(value) =>
+                                updateTrainingConfig("ensemble_top_k", value)
+                              }
+                            />
+                            <NumberField
+                              label="Minimum ensemble gain"
+                              value={trainingConfig.ensemble_min_gain}
+                              min={0}
+                              step={0.001}
+                              onChange={(value) =>
+                                updateTrainingConfig("ensemble_min_gain", value)
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold text-ink">
+                            Reproducibility and safeguards
+                          </h4>
+                          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <NumberField
+                              label="Random state"
+                              value={trainingConfig.random_state}
+                              min={0}
+                              onChange={(value) =>
+                                updateTrainingConfig("random_state", value)
+                              }
+                            />
+                            <NumberField
+                              label="Parallel jobs"
+                              value={trainingConfig.n_jobs}
+                              min={-1}
+                              onChange={(value) =>
+                                updateTrainingConfig("n_jobs", value)
+                              }
+                              help="-1 uses all available CPU cores."
+                            />
+                            <NumberField
+                              label="Overfit warning threshold"
+                              value={trainingConfig.overfit_gap_warn}
+                              min={0}
+                              max={1}
+                              step={0.01}
+                              onChange={(value) =>
+                                updateTrainingConfig("overfit_gap_warn", value)
+                              }
+                            />
+                          </div>
+
+                          <label className="mt-4 flex items-start gap-3 rounded-xl border border-surface-border p-4">
+                            <input
+                              type="checkbox"
+                              checked={trainingConfig.refit_on_all}
+                              onChange={(event) =>
+                                updateTrainingConfig(
+                                  "refit_on_all",
+                                  event.target.checked
+                                )
+                              }
+                              disabled={startingTraining || Boolean(trainingRunId)}
+                              className="mt-1 accent-orange"
+                            />
+                            <span>
+                              <span className="block text-sm font-medium text-ink">
+                                Refit selected model on all available data
+                              </span>
+                              <span className="mt-1 block text-xs text-ink-muted">
+                                Enable only if you understand how this affects the held-out test evaluation.
+                              </span>
+                            </span>
+                          </label>
+                        </div>
+
+                        <div>
+                          <h4 className="mb-3 text-sm font-semibold text-ink">
+                            Model selection
+                          </h4>
+
+                          <p className="mb-3 text-xs text-ink-muted">
+                            Exclude specific models or restrict evaluation to selected models. Leave both empty to use the default candidate set.
+                          </p>
+
+                          <div className="grid gap-5 md:grid-cols-2">
+                            {[
+                              ["exclude", "Exclude models"],
+                              ["include_only", "Include only these models"],
+                            ].map(([key, label]) => (
+                              <div key={key}>
+                                <p className="mb-2 text-sm font-medium text-ink">
+                                  {label}
+                                </p>
+                                <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-surface-border p-3">
+                                  {MODEL_OPTIONS.map((model) => (
+                                    <label
+                                      key={model}
+                                      className="flex items-center gap-2 text-sm text-ink-secondary"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={trainingConfig[key].includes(model)}
+                                        onChange={() => toggleModel(key, model)}
+                                        disabled={
+                                          startingTraining ||
+                                          Boolean(trainingRunId)
+                                        }
+                                        className="accent-orange"
+                                      />
+                                      {model}
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <Button
+                          variant="secondary"
+                          onClick={() =>
+                            setTrainingConfig({
+                              ...DEFAULT_TRAINING_CONFIG,
+                            })
+                          }
+                          disabled={startingTraining || Boolean(trainingRunId)}
+                        >
+                          <RefreshCw size={15} className="mr-2" />
+                          Reset configuration
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {trainingError && (
+                    <div className="mt-5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                      <AlertTriangle size={17} className="mt-0.5 shrink-0" />
+                      <span>{trainingError}</span>
+                    </div>
+                  )}
+
+                  {trainingRunId && (
+                    <div className="mt-5 rounded-xl border border-surface-border p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-ink">
+                            AutoML training run
+                          </p>
+                          <p className="mt-1 break-all text-xs text-ink-secondary">
+                            {trainingRunId}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${
+                            trainingStatus === "completed"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : trainingStatus === "failed"
+                                ? "bg-red-100 text-red-800"
+                                : trainingStatus === "cancelled"
+                                  ? "bg-gray-100 text-gray-700"
+                                  : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {trainingStatus
+                            .replaceAll("_", " ")
+                            .replace(/\b\w/g, (character) =>
+                              character.toUpperCase()
+                            )}
+                        </span>
+                      </div>
+
+                      {trainingIsActive && (
+                        <div className="mt-4 flex items-center gap-3 text-sm text-ink-secondary">
+                          <LoaderCircle size={18} className="animate-spin" />
+                          AutoML is evaluating candidate models. This section updates automatically.
+                        </div>
+                      )}
+
+                      {trainingStatus === "completed" && (
+                        <div className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
+                          <div className="flex items-center gap-2 font-medium">
+                            <CheckCircle2 size={17} />
+                            Training completed successfully.
+                          </div>
+                          <p className="mt-1">
+                            Your model evaluation results are ready.
+                          </p>
+                        </div>
+                      )}
+
+                      {trainingStatus === "failed" && (
+                        <p className="mt-3 text-sm text-red-700">
+                          {trainingError || "Training failed. Check the backend logs."}
+                        </p>
+                      )}
+
+                      {trainingStatus === "cancelled" && (
+                        <p className="mt-3 text-sm text-ink-secondary">
+                          This training run was cancelled.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+                    <p className="text-xs text-ink-muted">
+                      Preprocessing run:{" "}
+                      <span className="font-medium text-ink-secondary">
+                        {result.run_id || result.preprocessing_run_id}
+                      </span>
+                    </p>
+
+                    {trainingStatus === "completed" ? (
+                      <Button onClick={handleContinueToComparison}>
+                        View Model Comparison
+                        <ArrowRight size={16} className="ml-2" />
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleStartTraining}
+                        disabled={
+                          startingTraining ||
+                          trainingIsActive ||
+                          Boolean(
+                            trainingRunId &&
+                              !["failed", "cancelled"].includes(trainingStatus)
+                          ) ||
+                          !(result?.run_id || result?.preprocessing_run_id)
+                        }
+                      >
+                        {startingTraining || trainingIsActive ? (
+                          <>
+                            <LoaderCircle
+                              size={16}
+                              className="mr-2 animate-spin"
+                            />
+                            {startingTraining
+                              ? "Starting AutoML..."
+                              : "Training..."}
+                          </>
+                        ) : (
+                          <>
+                            {["failed", "cancelled"].includes(trainingStatus)
+                              ? "Retry AutoML Training"
+                              : "Start AutoML Training"}
+                            <ArrowRight size={16} className="ml-2" />
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>
 
+            {/* JSON reports */}
             <Card>
               <div className="space-y-5 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h3 className="font-semibold text-ink">
-                      JSON reports
-                    </h3>
-
+                    <h3 className="font-semibold text-ink">JSON reports</h3>
                     <p className="mt-1 text-sm text-ink-secondary">
-                      Inspect and download the JSON artifacts saved
-                      for this run.
+                      Inspect and download the JSON artifacts saved for this run.
                     </p>
                   </div>
 
@@ -999,9 +1688,7 @@ export default function PreprocessingPage() {
                   >
                     <RefreshCw
                       size={16}
-                      className={`mr-2 ${
-                        reportsLoading ? "animate-spin" : ""
-                      }`}
+                      className={`mr-2 ${reportsLoading ? "animate-spin" : ""}`}
                     />
                     Refresh reports
                   </Button>
@@ -1016,9 +1703,7 @@ export default function PreprocessingPage() {
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                     <p>{reportsError}</p>
                     <p className="mt-1 text-xs">
-                      This may happen for runs created before JSON report
-                      storage was added. Run preprocessing again after
-                      updating the backend.
+                      This may happen for runs created before JSON report storage was added.
                     </p>
                   </div>
                 ) : Object.keys(reports).length ? (
@@ -1045,12 +1730,9 @@ export default function PreprocessingPage() {
                         <p className="break-all text-sm font-medium text-ink">
                           {activeReport}
                         </p>
-
                         <Button
                           variant="secondary"
-                          onClick={() =>
-                            handleDownloadReport(activeReport)
-                          }
+                          onClick={() => handleDownloadReport(activeReport)}
                         >
                           <Download size={15} className="mr-2" />
                           Download JSON
@@ -1058,34 +1740,27 @@ export default function PreprocessingPage() {
                       </div>
 
                       <pre className="max-h-[520px] overflow-auto bg-white p-4 text-xs leading-6 text-ink">
-                        {JSON.stringify(
-                          reports[activeReport] ?? {},
-                          null,
-                          2
-                        )}
+                        {JSON.stringify(reports[activeReport] ?? {}, null, 2)}
                       </pre>
                     </div>
                   </>
                 ) : (
                   <div className="rounded-lg bg-surface-page p-4 text-sm text-ink-secondary">
                     No JSON reports are available for this run yet.
-                    Update the backend and run preprocessing again to
-                    generate them.
                   </div>
                 )}
               </div>
             </Card>
 
+            {/* Preprocessing log */}
             <Card>
               <div className="space-y-5 p-5">
                 <div>
                   <h3 className="font-semibold text-ink">
                     Preprocessing log
                   </h3>
-
                   <p className="mt-1 text-sm text-ink-secondary">
-                    Review the transformations recorded for this
-                    preprocessing run.
+                    Review the transformations recorded for this preprocessing run.
                   </p>
                 </div>
 
@@ -1093,21 +1768,9 @@ export default function PreprocessingPage() {
                   <>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                       {[
-                        [
-                          "Columns affected",
-                          logSummary.columns,
-                          "Unique columns in the log",
-                        ],
-                        [
-                          "Drop actions",
-                          logSummary.dropped,
-                          "Logged column-removal actions",
-                        ],
-                        [
-                          "Imputation",
-                          logSummary.imputed,
-                          "Missing-value handling actions",
-                        ],
+                        ["Columns affected", logSummary.columns, "Unique columns in the log"],
+                        ["Drop actions", logSummary.dropped, "Logged column-removal actions"],
+                        ["Imputation", logSummary.imputed, "Missing-value handling actions"],
                         [
                           "Encoding / scaling",
                           `${logSummary.encoded} / ${logSummary.scaled}`,
@@ -1118,14 +1781,10 @@ export default function PreprocessingPage() {
                           key={label}
                           className="rounded-xl border border-surface-border bg-surface-page p-4"
                         >
-                          <p className="text-sm text-ink-secondary">
-                            {label}
-                          </p>
-
+                          <p className="text-sm text-ink-secondary">{label}</p>
                           <p className="mt-2 text-2xl font-semibold text-ink">
                             {value}
                           </p>
-
                           <p className="mt-1 text-xs text-ink-muted">
                             {detail}
                           </p>
@@ -1136,9 +1795,7 @@ export default function PreprocessingPage() {
                     <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_190px]">
                       <input
                         value={logSearch}
-                        onChange={(event) =>
-                          setLogSearch(event.target.value)
-                        }
+                        onChange={(event) => setLogSearch(event.target.value)}
                         placeholder="Search column, action, reason or rule..."
                         aria-label="Search preprocessing logs"
                         className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-orange"
@@ -1146,9 +1803,7 @@ export default function PreprocessingPage() {
 
                       <select
                         value={logFilter}
-                        onChange={(event) =>
-                          setLogFilter(event.target.value)
-                        }
+                        onChange={(event) => setLogFilter(event.target.value)}
                         aria-label="Filter preprocessing logs"
                         className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-orange"
                       >
@@ -1175,20 +1830,14 @@ export default function PreprocessingPage() {
                             ? item
                             : { message: String(item) };
 
-                        const action = String(
-                          log.action ?? "Log event"
-                        )
+                        const action = String(log.action ?? "Log event")
                           .replaceAll("_", " ")
                           .replace(/\b\w/g, (character) =>
                             character.toUpperCase()
                           );
 
-                        const title =
-                          log.column || log.message || action;
-
-                        const isExpanded = Boolean(
-                          expandedLogs[index]
-                        );
+                        const title = log.column || log.message || action;
+                        const isExpanded = Boolean(expandedLogs[index]);
 
                         const details = [
                           ["Stage", log.stage],
@@ -1223,16 +1872,10 @@ export default function PreprocessingPage() {
                                 <p className="truncate font-medium text-ink">
                                   {title}
                                 </p>
-
                                 <p className="mt-1 text-sm text-ink-secondary">
-                                  {log.reason ||
-                                    log.stage ||
-                                    (log.message
-                                      ? "Recorded event"
-                                      : action)}
+                                  {log.reason || log.stage || (log.message ? "Recorded event" : action)}
                                 </p>
                               </div>
-
                               <span className="shrink-0 rounded-full border border-surface-border bg-surface-page px-2.5 py-1 text-xs text-ink-secondary">
                                 {action}
                               </span>
@@ -1240,7 +1883,7 @@ export default function PreprocessingPage() {
 
                             {isExpanded && (
                               <div className="space-y-3 border-t border-surface-border bg-surface-page p-4">
-                                {details.length > 0 ? (
+                                {details.length > 0 && (
                                   <dl className="grid gap-3 sm:grid-cols-2">
                                     {details.map(([label, value]) => (
                                       <div
@@ -1250,14 +1893,13 @@ export default function PreprocessingPage() {
                                         <dt className="text-xs text-ink-muted">
                                           {label}
                                         </dt>
-
                                         <dd className="mt-1 break-words text-sm text-ink">
                                           {String(value)}
                                         </dd>
                                       </div>
                                     ))}
                                   </dl>
-                                ) : null}
+                                )}
 
                                 {log.message && (
                                   <p className="whitespace-pre-wrap break-words text-sm text-ink-secondary">
@@ -1265,12 +1907,11 @@ export default function PreprocessingPage() {
                                   </p>
                                 )}
 
-                                {details.length === 0 &&
-                                  !log.message && (
-                                    <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs text-ink-secondary">
-                                      {JSON.stringify(item, null, 2)}
-                                    </pre>
-                                  )}
+                                {details.length === 0 && !log.message && (
+                                  <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs text-ink-secondary">
+                                    {JSON.stringify(item, null, 2)}
+                                  </pre>
+                                )}
                               </div>
                             )}
                           </div>
@@ -1286,8 +1927,7 @@ export default function PreprocessingPage() {
 
                     <p className="text-xs text-ink-muted">
                       Showing {visiblePreprocessingLogs.length} of{" "}
-                      {preprocessingLogs.length} log events. Expand any
-                      event to inspect its recorded details.
+                      {preprocessingLogs.length} log events.
                     </p>
                   </>
                 ) : (
@@ -1300,14 +1940,12 @@ export default function PreprocessingPage() {
           </section>
         )}
 
+        {/* Recent preprocessing runs */}
         <Card>
           <div className="p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="font-semibold text-ink">
-                  Recent runs
-                </h2>
-
+                <h2 className="font-semibold text-ink">Recent runs</h2>
                 <p className="mt-1 text-sm text-ink-secondary">
                   Previous preprocessing runs for the selected dataset.
                 </p>
@@ -1355,25 +1993,14 @@ export default function PreprocessingPage() {
                         <td className="py-3 pr-4 text-ink">
                           {run.target_column}
                         </td>
-
-                        <td className="py-3 pr-4">
-                          {run.train_rows}
-                        </td>
-
-                        <td className="py-3 pr-4">
-                          {run.test_rows}
-                        </td>
-
-                        <td className="py-3 pr-4">
-                          {run.feature_count}
-                        </td>
-
+                        <td className="py-3 pr-4">{run.train_rows}</td>
+                        <td className="py-3 pr-4">{run.test_rows}</td>
+                        <td className="py-3 pr-4">{run.feature_count}</td>
                         <td className="py-3 pr-4">
                           <span className="rounded-full bg-green-50 px-2 py-1 text-xs text-green-700">
                             {run.status}
                           </span>
                         </td>
-
                         <td className="py-3">
                           <div className="flex gap-2">
                             {run.artifacts?.train_available && (
@@ -1387,7 +2014,6 @@ export default function PreprocessingPage() {
                                 Train
                               </button>
                             )}
-
                             {run.artifacts?.test_available && (
                               <button
                                 type="button"
