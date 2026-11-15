@@ -1,4 +1,3 @@
-
 fastapi
 uvicorn[standard]
 pymongo
@@ -6,6 +5,7 @@ python-dotenv
 pydantic[email]
 pwdlib[argon2]
 PyJWT
+python-multipart
 
 # Data science and machine learning
 pandas>=2.0
