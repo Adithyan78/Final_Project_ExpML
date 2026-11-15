@@ -81,17 +81,19 @@ function titleCase(value = "") {
 function StatCard({ label, value, hint, icon: Icon }) {
   return (
     <Card>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2 sm:gap-3 min-w-0">
         <div className="min-w-0">
           <p className="text-sm text-ink-secondary">{label}</p>
-          <p className="mt-2 text-2xl font-semibold text-ink">{value}</p>
+          <p className="mt-2 text-xl sm:text-2xl font-semibold text-ink break-words">
+            {value}
+          </p>
           {hint && (
             <p className="mt-1 text-xs text-ink-muted">{hint}</p>
           )}
         </div>
 
         {Icon && (
-          <div className="rounded-xl bg-surface-page p-3">
+          <div className="rounded-xl bg-surface-page p-2.5 sm:p-3 shrink-0">
             <Icon size={19} className="text-ink-secondary" />
           </div>
         )}
@@ -102,7 +104,7 @@ function StatCard({ label, value, hint, icon: Icon }) {
 
 function EmptyPanel({ children }) {
   return (
-    <div className="rounded-xl border border-dashed border-surface-border p-6 text-center text-sm text-ink-secondary">
+    <div className="rounded-xl border border-dashed border-surface-border p-4 sm:p-6 text-center text-sm text-ink-secondary leading-relaxed">
       {children}
     </div>
   );
@@ -124,14 +126,14 @@ function BarList({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4 min-w-0">
       {items.map((item, index) => {
         const value = Number(item[valueKey]) || 0;
         const width = Math.max(0, Math.min(100, (value / max) * 100));
 
         return (
-          <div key={`${item[labelKey]}-${index}`}>
-            <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+          <div key={`${item[labelKey]}-${index}`} className="min-w-0">
+            <div className="mb-1.5 flex items-center justify-between gap-2 sm:gap-3 text-xs min-w-0">
               <span
                 className="min-w-0 truncate text-ink-secondary"
                 title={String(item[labelKey])}
@@ -164,7 +166,7 @@ function Histogram({ items }) {
   const max = Math.max(1, ...items.map((item) => item.count));
 
   return (
-    <div className="flex h-56 items-end gap-1.5 border-b border-surface-border px-1 pt-4">
+    <div className="flex h-48 sm:h-56 items-end gap-1 sm:gap-1.5 border-b border-surface-border px-1 pt-4 min-w-0 overflow-hidden">
       {items.map((item, index) => (
         <div
           key={`${item.label}-${index}`}
@@ -204,9 +206,9 @@ function CorrelationHeatmap({ matrix }) {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain">
       <table
-        className="w-full border-separate text-xs"
+        className="w-max min-w-full border-separate text-xs"
         style={{ borderSpacing: "3px" }}
       >
         <thead>
@@ -269,7 +271,7 @@ function CorrelationHeatmap({ matrix }) {
         </tbody>
       </table>
 
-      <p className="mt-3 text-xs text-ink-muted">
+      <p className="mt-3 text-xs text-ink-muted leading-relaxed">
         Orange = positive correlation. Blue = negative correlation.
         Correlation does not establish causation.
       </p>
@@ -279,10 +281,12 @@ function CorrelationHeatmap({ matrix }) {
 
 function SectionHeading({ title, subtitle }) {
   return (
-    <div className="mb-5">
+    <div className="mb-4 sm:mb-5 min-w-0">
       <h2 className="text-base font-semibold text-ink">{title}</h2>
       {subtitle && (
-        <p className="mt-1 text-sm text-ink-secondary">{subtitle}</p>
+        <p className="mt-1 text-sm text-ink-secondary leading-relaxed">
+          {subtitle}
+        </p>
       )}
     </div>
   );
@@ -688,7 +692,7 @@ export default function TrainingPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="flex min-h-[55vh] items-center justify-center">
+        <div className="flex min-h-[55vh] items-center justify-center px-4">
           <div className="text-center">
             <LoaderCircle
               className="mx-auto animate-spin text-ink-secondary"
@@ -706,21 +710,21 @@ export default function TrainingPage() {
   if (error && !dataset) {
     return (
       <AppShell>
-        <div className="mx-auto max-w-2xl py-12">
+        <div className="mx-auto max-w-2xl py-8 sm:py-12 px-1">
           <Card>
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 min-w-0">
               <AlertTriangle
                 className="mt-1 shrink-0 text-red-500"
                 size={22}
               />
-              <div>
+              <div className="min-w-0">
                 <h2 className="font-semibold text-ink">
                   Could not load dataset
                 </h2>
-                <p className="mt-2 text-sm text-ink-secondary">
+                <p className="mt-2 text-sm text-ink-secondary break-words">
                   {error}
                 </p>
-                <div className="mt-5 flex flex-wrap gap-3">
+                <div className="mt-5 flex flex-col sm:flex-row flex-wrap gap-3">
                   <Button onClick={() => loadDataset()}>
                     <RefreshCw size={16} className="mr-2" />
                     Try again
@@ -742,48 +746,52 @@ export default function TrainingPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-7xl space-y-6 pb-10">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+      <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 sm:space-y-6 pb-8 sm:pb-10">
+        {/* Page header */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 min-w-0">
+          <div className="min-w-0">
             <button
               type="button"
               onClick={() => navigate(ROUTES.UPLOAD)}
-              className="mb-4 inline-flex items-center gap-2 text-sm text-ink-secondary hover:text-ink"
+              className="mb-4 inline-flex min-h-9 items-center gap-2 text-sm text-ink-secondary hover:text-ink"
             >
               <ArrowLeft size={16} />
               Back to datasets
             </button>
 
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-surface-page p-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="rounded-xl bg-surface-page p-2.5 sm:p-3 shrink-0">
                 <FileSpreadsheet size={24} className="text-ink" />
               </div>
-              <div>
-                <h1 className="text-2xl font-semibold text-ink">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-semibold text-ink">
                   Dataset analysis
                 </h1>
-                <p className="mt-1 text-sm text-ink-secondary">
+                <p className="mt-1 text-sm text-ink-secondary leading-relaxed">
                   Explore data quality and configure your ML pipeline.
                 </p>
               </div>
             </div>
           </div>
 
-          <Button
-            variant="secondary"
-            onClick={() => loadDataset(true)}
-            disabled={refreshing}
-          >
-            <RefreshCw
-              size={16}
-              className={`mr-2 ${refreshing ? "animate-spin" : ""}`}
-            />
-            Refresh profile
-          </Button>
+          <div className="w-full sm:w-auto">
+            <Button
+              variant="secondary"
+              onClick={() => loadDataset(true)}
+              disabled={refreshing}
+            >
+              <RefreshCw
+                size={16}
+                className={`mr-2 ${refreshing ? "animate-spin" : ""}`}
+              />
+              Refresh profile
+            </Button>
+          </div>
         </div>
 
+        {/* Dataset information */}
         <Card>
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
             <div className="flex min-w-0 items-center gap-3">
               <Database size={22} className="shrink-0 text-ink-secondary" />
               <div className="min-w-0">
@@ -799,7 +807,7 @@ export default function TrainingPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 text-sm text-ink-secondary">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ink-secondary">
               <span>{formatNumber(rowCount)} rows</span>
               <span>{formatNumber(columnCount)} columns</span>
             </div>
@@ -807,19 +815,20 @@ export default function TrainingPage() {
         </Card>
 
         {error && (
-          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4 text-sm text-amber-900 min-w-0 break-words">
             <AlertTriangle size={18} className="mt-0.5 shrink-0" />
             <p>{error}</p>
           </div>
         )}
 
+        {/* Dataset overview */}
         <section>
           <SectionHeading
             title="Dataset overview"
             subtitle="A quick snapshot of the uploaded dataset."
           />
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
             <StatCard
               label="Total rows"
               value={formatNumber(overview.n_rows ?? rowCount)}
@@ -862,7 +871,8 @@ export default function TrainingPage() {
           </div>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-2">
+        {/* Missing values and column types */}
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           <Card>
             <CardHeader
               title="Missing values by column"
@@ -883,13 +893,14 @@ export default function TrainingPage() {
               subtitle="How the analyzer classified your columns."
             />
             <BarList items={typeCounts} />
-            <p className="mt-4 text-xs text-ink-muted">
+            <p className="mt-4 text-xs text-ink-muted leading-relaxed">
               Type inference is a profile estimate; review columns before training.
             </p>
           </Card>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-2">
+        {/* Target distribution and correlations */}
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           <Card>
             <CardHeader
               title="Target class distribution"
@@ -932,14 +943,14 @@ export default function TrainingPage() {
                 {strongCorrelations.slice(0, 10).map((pair) => (
                   <div
                     key={`${pair.featureA}-${pair.featureB}`}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-page p-3 text-sm"
+                    className="flex flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between gap-2 sm:gap-3 rounded-lg bg-surface-page p-3 text-sm min-w-0"
                   >
-                    <span className="text-ink">
+                    <span className="min-w-0 break-words text-ink">
                       {pair.featureA}
                       <span className="mx-2 text-ink-muted">↔</span>
                       {pair.featureB}
                     </span>
-                    <span className="font-semibold text-ink">
+                    <span className="shrink-0 font-semibold text-ink">
                       {pair.value.toFixed(3)}
                     </span>
                   </div>
@@ -953,13 +964,14 @@ export default function TrainingPage() {
           </Card>
         </section>
 
+        {/* Distribution explorer */}
         <section>
           <SectionHeading
             title="Distribution explorer"
             subtitle="Inspect real numeric histograms and frequent categorical values."
           />
 
-          <div className="grid gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
             <Card>
               <CardHeader
                 title="Numeric distribution"
@@ -980,7 +992,7 @@ export default function TrainingPage() {
                     onChange={(event) =>
                       setSelectedNumericColumn(event.target.value)
                     }
-                    className="mb-5 w-full rounded-lg border border-surface-border bg-white px-3 py-2 text-sm text-ink"
+                    className="mb-5 w-full min-w-0 rounded-lg border border-surface-border bg-white px-3 py-2.5 sm:py-2 text-sm text-ink"
                   >
                     {numericColumnNames.map((name) => (
                       <option key={name} value={name}>
@@ -992,16 +1004,16 @@ export default function TrainingPage() {
                   <Histogram items={histogramItems} />
 
                   {activeNumericData?.statistics && (
-                    <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                       {["min", "max", "mean", "median"].map((key) => (
                         <div
                           key={key}
-                          className="rounded-lg bg-surface-page p-3"
+                          className="rounded-lg bg-surface-page p-3 min-w-0"
                         >
                           <p className="text-xs text-ink-secondary">
                             {titleCase(key)}
                           </p>
-                          <p className="mt-1 font-semibold text-ink">
+                          <p className="mt-1 font-semibold text-ink break-words">
                             {formatNumber(
                               activeNumericData.statistics[key]
                             )}
@@ -1012,7 +1024,7 @@ export default function TrainingPage() {
                   )}
 
                   {activeNumericData?.statistics && (
-                    <p className="mt-4 text-xs text-ink-muted">
+                    <p className="mt-4 text-xs text-ink-muted leading-relaxed break-words">
                       Standard deviation:{" "}
                       {formatNumber(activeNumericData.statistics.std)}
                       {" · "}Skewness:{" "}
@@ -1051,7 +1063,7 @@ export default function TrainingPage() {
                     onChange={(event) =>
                       setSelectedCategoryColumn(event.target.value)
                     }
-                    className="mb-5 w-full rounded-lg border border-surface-border bg-white px-3 py-2 text-sm text-ink"
+                    className="mb-5 w-full min-w-0 rounded-lg border border-surface-border bg-white px-3 py-2.5 sm:py-2 text-sm text-ink"
                   >
                     {categoryColumnNames.map((name) => (
                       <option key={name} value={name}>
@@ -1066,7 +1078,7 @@ export default function TrainingPage() {
                     valueKey="count"
                   />
 
-                  <p className="mt-4 text-xs text-ink-muted">
+                  <p className="mt-4 text-xs text-ink-muted leading-relaxed">
                     Showing up to 12 values out of{" "}
                     {formatNumber(activeCategoryData?.total_categories)}{" "}
                     distinct categories.
@@ -1081,6 +1093,7 @@ export default function TrainingPage() {
           </div>
         </section>
 
+        {/* Correlation matrix */}
         <Card>
           <CardHeader
             title="Correlation matrix"
@@ -1089,7 +1102,8 @@ export default function TrainingPage() {
           <CorrelationHeatmap matrix={correlationMatrix} />
         </Card>
 
-        <section className="grid gap-6 xl:grid-cols-2">
+        {/* Quality flags */}
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           <Card>
             <CardHeader
               title="Data quality flags"
@@ -1101,7 +1115,7 @@ export default function TrainingPage() {
                 {qualityFlags.map((flag, index) => (
                   <div
                     key={`${flag}-${index}`}
-                    className="flex items-start gap-3 rounded-lg bg-surface-page p-3 text-sm"
+                    className="flex items-start gap-3 rounded-lg bg-surface-page p-3 text-sm min-w-0"
                   >
                     <AlertTriangle
                       size={17}
@@ -1122,7 +1136,7 @@ export default function TrainingPage() {
                 {warnings.map((warning, index) => (
                   <p
                     key={index}
-                    className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+                    className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 break-words"
                   >
                     {typeof warning === "string"
                       ? warning
@@ -1144,7 +1158,7 @@ export default function TrainingPage() {
                 <p className="text-sm font-medium text-ink">
                   Constant columns
                 </p>
-                <p className="mt-1 text-xs text-ink-secondary">
+                <p className="mt-1 text-xs text-ink-secondary leading-relaxed">
                   {formatNumber(
                     summaryMetrics.constant_column_count ??
                       overview.constant_columns
@@ -1157,7 +1171,7 @@ export default function TrainingPage() {
                     {constantColumns.map((name) => (
                       <span
                         key={name}
-                        className="rounded-md bg-surface-page px-2 py-1 text-xs text-ink-secondary"
+                        className="max-w-full break-words rounded-md bg-surface-page px-2 py-1 text-xs text-ink-secondary"
                       >
                         {name}
                       </span>
@@ -1170,7 +1184,7 @@ export default function TrainingPage() {
                 <p className="text-sm font-medium text-ink">
                   High-cardinality columns
                 </p>
-                <p className="mt-1 text-xs text-ink-secondary">
+                <p className="mt-1 text-xs text-ink-secondary leading-relaxed">
                   Columns with many distinct values, which may include IDs or names.
                 </p>
 
@@ -1179,7 +1193,7 @@ export default function TrainingPage() {
                     {highCardinalityColumns.slice(0, 8).map((item) => (
                       <div
                         key={item.column}
-                        className="flex items-center justify-between gap-3 text-sm"
+                        className="flex items-center justify-between gap-3 text-sm min-w-0"
                       >
                         <span className="truncate text-ink">
                           {item.column}
@@ -1200,13 +1214,14 @@ export default function TrainingPage() {
           </Card>
         </section>
 
+        {/* Column profile */}
         <Card>
           <CardHeader
             title="Column profile"
             subtitle="Inspect inferred types, missing values, cardinality, and numeric outliers."
           />
 
-          <div className="overflow-x-auto">
+          <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
                 <tr className="border-b border-surface-border text-xs text-ink-secondary">
@@ -1278,282 +1293,6 @@ export default function TrainingPage() {
             </table>
           </div>
         </Card>
-
-        {/* <Card>
-          <CardHeader
-            title="Configure AutoML training"
-            subtitle="These settings are sent to your actual AutoML trainer."
-          />
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor="objective"
-                className="mb-2 block text-sm font-medium text-ink"
-              >
-                ML objective
-              </label>
-              <select
-                id="objective"
-                value={objective}
-                onChange={(event) => setObjective(event.target.value)}
-                disabled={starting || isTraining}
-                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink disabled:opacity-50"
-              >
-                {OBJECTIVES.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="target-column"
-                className="mb-2 block text-sm font-medium text-ink"
-              >
-                Preprocessing target column
-              </label>
-              <div
-                id="target-column"
-                className="w-full rounded-lg border border-surface-border bg-surface-page px-3 py-2.5 text-sm text-ink"
-              >
-                {targetColumn || "No target column was supplied"}
-              </div>
-              <p className="mt-1 text-xs text-ink-muted">
-                The training run uses the target saved with the completed preprocessing run.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="cv-splits"
-                className="mb-2 block text-sm font-medium text-ink"
-              >
-                Cross-validation folds
-              </label>
-              <select
-                id="cv-splits"
-                value={cvSplits}
-                onChange={(event) => setCvSplits(event.target.value)}
-                disabled={starting || isTraining}
-                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink disabled:opacity-50"
-              >
-                <option value="3">3 folds</option>
-                <option value="5">5 folds</option>
-                <option value="10">10 folds</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="max-candidates"
-                className="mb-2 block text-sm font-medium text-ink"
-              >
-                Maximum model candidates
-              </label>
-              <select
-                id="max-candidates"
-                value={maxCandidates}
-                onChange={(event) => setMaxCandidates(event.target.value)}
-                disabled={starting || isTraining}
-                className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink disabled:opacity-50"
-              >
-                <option value="3">3 candidates</option>
-                <option value="5">5 candidates</option>
-                <option value="10">10 candidates</option>
-                <option value="15">15 candidates</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <label className="flex items-start gap-3 rounded-xl bg-surface-page p-4">
-              <input
-                type="checkbox"
-                checked={tune}
-                onChange={(event) => setTune(event.target.checked)}
-                disabled={starting || isTraining}
-                className="mt-1"
-              />
-              <span>
-                <span className="block text-sm font-medium text-ink">
-                  Hyperparameter tuning
-                </span>
-                <span className="mt-1 block text-xs text-ink-secondary">
-                  Tune the top candidate models using the trainer's configured search.
-                </span>
-              </span>
-            </label>
-
-            <label className="flex items-start gap-3 rounded-xl bg-surface-page p-4">
-              <input
-                type="checkbox"
-                checked={ensemble}
-                onChange={(event) => setEnsemble(event.target.checked)}
-                disabled={starting || isTraining}
-                className="mt-1"
-              />
-              <span>
-                <span className="block text-sm font-medium text-ink">
-                  Ensemble models
-                </span>
-                <span className="mt-1 block text-xs text-ink-secondary">
-                  Evaluate whether combining candidate models improves performance.
-                </span>
-              </span>
-            </label>
-          </div>
-
-          <div className="mt-5 rounded-xl border border-surface-border p-4">
-            <div className="flex items-start gap-3">
-              <Target size={19} className="mt-0.5 text-ink-secondary" />
-              <div>
-                <p className="text-sm font-medium text-ink">
-                  Preprocessing run
-                </p>
-                <p className="mt-1 break-all text-xs text-ink-secondary">
-                  {preprocessingRunId || "Missing preprocessing run ID"}
-                </p>
-                <p className="mt-2 text-xs text-ink-muted">
-                  Training uses the processed training and test files from this run.
-                  The test split is configured during preprocessing.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {targetWarning && (
-            <div className="mt-5 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-              <p>{targetWarning}</p>
-            </div>
-          )}
-
-          {hasTarget && !targetWarning && (
-            <div className="mt-5 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-              <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-              <p>
-                Target selected: <strong>{targetColumn}</strong>. Confirm that
-                this is the outcome you intend to predict.
-              </p>
-            </div>
-          )}
-
-          {trainingError && (
-            <div className="mt-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-              <AlertTriangle size={18} className="mt-0.5 shrink-0" />
-              <p>{trainingError}</p>
-            </div>
-          )}
-
-          {trainingRunId && (
-            <div className="mt-5 rounded-xl border border-surface-border p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-ink">
-                    Training run
-                  </p>
-                  <p className="mt-1 break-all text-xs text-ink-secondary">
-                    {trainingRunId}
-                  </p>
-                </div>
-
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    trainingStatus === "completed"
-                      ? "bg-emerald-100 text-emerald-800"
-                      : trainingStatus === "failed"
-                        ? "bg-red-100 text-red-800"
-                        : trainingStatus === "cancelled"
-                          ? "bg-gray-100 text-gray-700"
-                          : "bg-amber-100 text-amber-800"
-                  }`}
-                >
-                  {titleCase(trainingStatus)}
-                </span>
-              </div>
-
-              {isTraining && (
-                <div className="mt-4 flex items-center gap-3 text-sm text-ink-secondary">
-                  <LoaderCircle size={18} className="animate-spin" />
-                  AutoML is training and evaluating candidate models. This page
-                  will update automatically.
-                </div>
-              )}
-
-              {trainingStatus === "completed" && (
-                <div className="mt-4">
-                  <p className="text-sm text-emerald-700">
-                    Training completed. Your model results are ready.
-                  </p>
-                  <Button
-                    onClick={openModelResults}
-                    className="mt-4"
-                  >
-                    View model comparison
-                    <ArrowRight size={16} className="ml-2" />
-                  </Button>
-                </div>
-              )}
-
-              {trainingStatus === "failed" && (
-                <p className="mt-3 text-sm text-red-700">
-                  {trainingError ||
-                    "Training failed. Check the run details and try again."}
-                </p>
-              )}
-
-              {trainingStatus === "cancelled" && (
-                <p className="mt-3 text-sm text-ink-secondary">
-                  This training run was cancelled.
-                </p>
-              )}
-
-              {trainingSummary && (
-                <pre className="mt-4 max-h-48 overflow-auto rounded-lg bg-surface-page p-3 text-xs text-ink-secondary">
-                  {JSON.stringify(trainingSummary, null, 2)}
-                </pre>
-              )}
-            </div>
-          )}
-
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-surface-border pt-5">
-            <div className="text-xs text-ink-secondary">
-              <Settings2 size={15} className="mr-1 inline" />
-              {titleCase(objective)} · {cvSplits} CV folds ·{" "}
-              {maxCandidates} candidates · Tuning {tune ? "on" : "off"} · Ensemble {ensemble ? "on" : "off"}
-            </div>
-
-            <Button
-              onClick={handleContinue}
-              disabled={
-                starting ||
-                isTraining ||
-                trainingStatus === "completed"
-              }
-            >
-              {starting || isTraining ? (
-                <>
-                  <LoaderCircle size={16} className="mr-2 animate-spin" />
-                  {starting ? "Starting training…" : "Training…"}
-                </>
-              ) : trainingStatus === "completed" ? (
-                <>
-                  Training completed
-                  <CheckCircle2 size={16} className="ml-2" />
-                </>
-              ) : (
-                <>
-                  Start AutoML training
-                  <ArrowRight size={16} className="ml-2" />
-                </>
-              )}
-            </Button>
-          </div>
-        </Card> */}
-      
       </div>
     </AppShell>
   );

@@ -99,8 +99,8 @@ function DonutChart({
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-5">
-      <div className="relative h-36 w-36 shrink-0">
+    <div className="flex min-w-0 flex-wrap items-center gap-4 sm:gap-5">
+      <div className="relative h-32 w-32 shrink-0 sm:h-36 sm:w-36">
         <svg
           viewBox="0 0 100 100"
           className="h-full w-full -rotate-90"
@@ -155,25 +155,25 @@ function DonutChart({
         </div>
       </div>
 
-      <div className="min-w-[150px] flex-1 space-y-3">
+      <div className="min-w-0 flex-1 space-y-3">
         {segments.map((segment, index) => (
           <div
             key={segment.label}
-            className="flex items-center justify-between gap-4 text-sm"
+            className="flex min-w-0 items-center justify-between gap-2 text-sm"
           >
-            <span className="flex items-center gap-2 text-ink-secondary">
+            <span className="flex min-w-0 items-center gap-2 text-ink-secondary">
               <span
-                className="h-2.5 w-2.5 rounded-full"
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{
                   backgroundColor:
                     segment.color ||
                     colors[index % colors.length],
                 }}
               />
-              {segment.label}
+              <span className="break-words">{segment.label}</span>
             </span>
 
-            <span className="font-medium text-ink">
+            <span className="shrink-0 font-medium text-ink">
               {segment.value}{" "}
               <span className="text-ink-muted">
                 (
@@ -200,7 +200,7 @@ function NumberField({
   help,
 }) {
   return (
-    <label className="space-y-2 text-sm">
+    <label className="min-w-0 space-y-2 text-sm">
       <span className="font-medium text-ink">{label}</span>
       <input
         type="number"
@@ -212,7 +212,7 @@ function NumberField({
           const next = event.target.value;
           onChange(next === "" ? "" : Number(next));
         }}
-        className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
+        className="w-full min-w-0 rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
       />
       {help && (
         <span className="block text-xs text-ink-muted">
@@ -790,14 +790,15 @@ export default function PreprocessingPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-6xl space-y-6 p-5 md:p-8">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-sm text-orange">
+      <div className="mx-auto w-full min-w-0 max-w-6xl space-y-5 p-3 sm:space-y-6 sm:p-5 md:p-8">
+        {/* Page heading */}
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-orange">
             <Workflow size={17} />
             Data pipeline
           </div>
 
-          <h1 className="text-2xl font-semibold text-ink">
+          <h1 className="text-xl font-semibold text-ink sm:text-2xl">
             Preprocessing workspace
           </h1>
 
@@ -809,23 +810,24 @@ export default function PreprocessingPage() {
         </div>
 
         {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="flex min-w-0 items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             <AlertCircle size={18} className="mt-0.5 shrink-0" />
-            <span>{error}</span>
+            <span className="break-words">{error}</span>
           </div>
         )}
 
         {notice && (
-          <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+          <div className="flex min-w-0 items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
             <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-            <span>{notice}</span>
+            <span className="break-words">{notice}</span>
           </div>
         )}
 
+        {/* Configure preprocessing */}
         <Card>
-          <div className="space-y-5 p-5">
+          <div className="min-w-0 space-y-5 p-4 sm:p-5">
             <div className="flex items-center gap-2">
-              <Database size={18} className="text-orange" />
+              <Database size={18} className="shrink-0 text-orange" />
               <h2 className="font-semibold text-ink">
                 Configure preprocessing
               </h2>
@@ -841,15 +843,15 @@ export default function PreprocessingPage() {
                 No datasets found. Upload a dataset before continuing.
               </p>
             ) : (
-              <div className="grid gap-5 md:grid-cols-3">
-                <label className="space-y-2 text-sm">
+              <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3">
+                <label className="min-w-0 space-y-2 text-sm">
                   <span className="font-medium text-ink">Dataset</span>
                   <select
                     value={datasetId}
                     onChange={(event) =>
                       handleDatasetChange(event.target.value)
                     }
-                    className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
+                    className="w-full min-w-0 rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
                   >
                     {datasets.map((dataset) => (
                       <option key={dataset.id} value={dataset.id}>
@@ -859,14 +861,14 @@ export default function PreprocessingPage() {
                   </select>
                 </label>
 
-                <label className="space-y-2 text-sm">
+                <label className="min-w-0 space-y-2 text-sm">
                   <span className="font-medium text-ink">
                     Target column
                   </span>
                   <select
                     value={target}
                     onChange={(event) => setTarget(event.target.value)}
-                    className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
+                    className="w-full min-w-0 rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
                   >
                     <option value="">Select target</option>
                     {columns.map((column) => (
@@ -877,12 +879,12 @@ export default function PreprocessingPage() {
                   </select>
                 </label>
 
-                <label className="space-y-2 text-sm">
+                <label className="min-w-0 space-y-2 text-sm">
                   <span className="font-medium text-ink">Test split</span>
                   <select
                     value={testSize}
                     onChange={(event) => setTestSize(event.target.value)}
-                    className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
+                    className="w-full min-w-0 rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange"
                   >
                     <option value="0.1">10% test / 90% train</option>
                     <option value="0.2">20% test / 80% train</option>
@@ -900,7 +902,7 @@ export default function PreprocessingPage() {
               </p>
             )}
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button
                 onClick={handlePreprocess}
                 disabled={loading || running || !datasetId || !target}
@@ -926,17 +928,18 @@ export default function PreprocessingPage() {
         </Card>
 
         {result && (
-          <section className="space-y-4">
-            <div>
+          <section className="min-w-0 space-y-4">
+            <div className="min-w-0">
               <h2 className="text-lg font-semibold text-ink">
                 Latest preprocessing results
               </h2>
-              <p className="mt-1 text-sm text-ink-secondary">
+              <p className="mt-1 break-all text-sm text-ink-secondary">
                 Run ID: {result.run_id}
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Result metrics */}
+            <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 lg:grid-cols-4">
               {[
                 ["Training rows", result.train_rows],
                 ["Testing rows", result.test_rows],
@@ -944,9 +947,9 @@ export default function PreprocessingPage() {
                 ["Removed missing targets", result.rows_removed_missing_target],
               ].map(([label, value]) => (
                 <Card key={label}>
-                  <div className="p-5">
+                  <div className="min-w-0 p-4 sm:p-5">
                     <p className="text-sm text-ink-secondary">{label}</p>
-                    <p className="mt-2 text-2xl font-semibold text-ink">
+                    <p className="mt-2 break-words text-xl font-semibold text-ink sm:text-2xl">
                       {value ?? "—"}
                     </p>
                   </div>
@@ -954,8 +957,9 @@ export default function PreprocessingPage() {
               ))}
             </div>
 
+            {/* Preprocessing insights */}
             <Card>
-              <div className="space-y-5 p-5">
+              <div className="min-w-0 space-y-5 p-4 sm:p-5">
                 <div>
                   <h3 className="text-lg font-semibold text-ink">
                     Preprocessing insights
@@ -975,7 +979,7 @@ export default function PreprocessingPage() {
                       key={key}
                       type="button"
                       onClick={() => setInsightTab(key)}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                      className={`shrink-0 rounded-lg border px-4 py-2 text-sm font-medium transition ${
                         insightTab === key
                           ? "border-orange bg-orange-50 text-orange"
                           : "border-surface-border bg-white text-ink-secondary hover:bg-surface-page"
@@ -988,10 +992,10 @@ export default function PreprocessingPage() {
 
                 {insightTab === "overview" && (
                   <div className="space-y-5">
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-xl border border-surface-border p-4">
+                    <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-3">
+                      <div className="min-w-0 rounded-xl border border-surface-border p-3 sm:p-4">
                         <p className="text-sm text-ink-secondary">Input dataset</p>
-                        <p className="mt-2 text-2xl font-semibold text-ink">
+                        <p className="mt-2 break-words text-xl font-semibold text-ink sm:text-2xl">
                           {profile?.row_count ?? profile?.rows ?? "—"}
                         </p>
                         <p className="text-xs text-ink-muted">
@@ -999,9 +1003,9 @@ export default function PreprocessingPage() {
                         </p>
                       </div>
 
-                      <div className="rounded-xl border border-surface-border p-4">
+                      <div className="min-w-0 rounded-xl border border-surface-border p-3 sm:p-4">
                         <p className="text-sm text-ink-secondary">Output features</p>
-                        <p className="mt-2 text-2xl font-semibold text-ink">
+                        <p className="mt-2 break-words text-xl font-semibold text-ink sm:text-2xl">
                           {result.feature_count ??
                             result.selected_features?.length ??
                             0}
@@ -1011,11 +1015,11 @@ export default function PreprocessingPage() {
                         </p>
                       </div>
 
-                      <div className="rounded-xl border border-surface-border p-4">
+                      <div className="min-w-0 rounded-xl border border-surface-border p-3 sm:p-4">
                         <p className="text-sm text-ink-secondary">
                           Logged transformations
                         </p>
-                        <p className="mt-2 text-2xl font-semibold text-ink">
+                        <p className="mt-2 break-words text-xl font-semibold text-ink sm:text-2xl">
                           {preprocessingLogs.length}
                         </p>
                         <p className="text-xs text-ink-muted">
@@ -1024,8 +1028,8 @@ export default function PreprocessingPage() {
                       </div>
                     </div>
 
-                    <div className="grid gap-5 lg:grid-cols-2">
-                      <div className="rounded-xl border border-surface-border p-4">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+                      <div className="min-w-0 rounded-xl border border-surface-border p-3 sm:p-4">
                         <h4 className="mb-4 font-medium text-ink">
                           Train/test split
                         </h4>
@@ -1050,7 +1054,7 @@ export default function PreprocessingPage() {
                         />
                       </div>
 
-                      <div className="rounded-xl border border-surface-border p-4">
+                      <div className="min-w-0 rounded-xl border border-surface-border p-3 sm:p-4">
                         <h4 className="mb-4 font-medium text-ink">
                           Transformation activity
                         </h4>
@@ -1100,17 +1104,17 @@ export default function PreprocessingPage() {
                     </p>
 
                     {result.selected_features?.length ? (
-                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {result.selected_features.map((feature) => (
                           <div
                             key={feature}
-                            className="flex items-center gap-2 rounded-lg border border-surface-border bg-surface-page px-3 py-2 text-sm text-ink"
+                            className="flex min-w-0 items-center gap-2 rounded-lg border border-surface-border bg-surface-page px-3 py-2 text-sm text-ink"
                           >
                             <CheckCircle2
                               size={15}
                               className="shrink-0 text-emerald-600"
                             />
-                            <span className="break-all">{feature}</span>
+                            <span className="min-w-0 break-all">{feature}</span>
                           </div>
                         ))}
                       </div>
@@ -1132,7 +1136,7 @@ export default function PreprocessingPage() {
                     ].map(([step, title, description]) => (
                       <div
                         key={step}
-                        className="flex gap-3 rounded-xl border border-surface-border p-4"
+                        className="flex min-w-0 gap-3 rounded-xl border border-surface-border p-3 sm:p-4"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 text-sm font-semibold text-orange">
                           {step}
@@ -1152,7 +1156,7 @@ export default function PreprocessingPage() {
 
             {/* Selected features and AutoML */}
             <Card>
-              <div className="space-y-5 p-5">
+              <div className="min-w-0 space-y-5 p-4 sm:p-5">
                 <div>
                   <h3 className="font-semibold text-ink">
                     Selected features
@@ -1163,7 +1167,7 @@ export default function PreprocessingPage() {
                       {result.selected_features.map((feature) => (
                         <span
                           key={feature}
-                          className="rounded-full bg-orange-50 px-3 py-1 text-sm text-orange"
+                          className="max-w-full break-all rounded-full bg-orange-50 px-3 py-1 text-sm text-orange"
                         >
                           {feature}
                         </span>
@@ -1176,7 +1180,7 @@ export default function PreprocessingPage() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                   <Button
                     onClick={() => handleDownload(result.run_id, "train")}
                   >
@@ -1196,7 +1200,7 @@ export default function PreprocessingPage() {
                 <div className="border-t border-surface-border pt-5">
                   <div className="mb-5">
                     <div className="flex items-center gap-2">
-                      <Workflow size={19} className="text-orange" />
+                      <Workflow size={19} className="shrink-0 text-orange" />
                       <h3 className="font-semibold text-ink">
                         AutoML configuration
                       </h3>
@@ -1209,8 +1213,8 @@ export default function PreprocessingPage() {
 
                   {/* Basic settings */}
                   <div className="space-y-5">
-                    <div className="grid gap-5 md:grid-cols-2">
-                      <label className="space-y-2 text-sm">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+                      <label className="min-w-0 space-y-2 text-sm">
                         <span className="font-medium text-ink">
                           Learning objective
                         </span>
@@ -1222,7 +1226,7 @@ export default function PreprocessingPage() {
                             updateTrainingConfig("primary_metric", null);
                           }}
                           disabled={startingTraining || Boolean(trainingRunId)}
-                          className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange disabled:opacity-50"
+                          className="w-full min-w-0 rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange disabled:opacity-50"
                         >
                           <option value="auto">Auto-detect</option>
                           <option value="classification">Classification</option>
@@ -1233,7 +1237,7 @@ export default function PreprocessingPage() {
                         </span>
                       </label>
 
-                      <label className="space-y-2 text-sm">
+                      <label className="min-w-0 space-y-2 text-sm">
                         <span className="font-medium text-ink">
                           Primary evaluation metric
                         </span>
@@ -1250,7 +1254,7 @@ export default function PreprocessingPage() {
                             Boolean(trainingRunId) ||
                             trainingConfig.task === "auto"
                           }
-                          className="w-full rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange disabled:opacity-50"
+                          className="w-full min-w-0 rounded-lg border border-surface-border bg-white p-3 text-ink outline-none focus:border-orange disabled:opacity-50"
                         >
                           <option value="">Automatic selection</option>
                           {metricOptions.map(([value, label]) => (
@@ -1265,8 +1269,8 @@ export default function PreprocessingPage() {
                       </label>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="flex items-start gap-3 rounded-xl border border-surface-border p-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                      <label className="flex min-w-0 items-start gap-3 rounded-xl border border-surface-border p-3 sm:p-4">
                         <input
                           type="checkbox"
                           checked={trainingConfig.tune}
@@ -1274,9 +1278,9 @@ export default function PreprocessingPage() {
                             updateTrainingConfig("tune", event.target.checked)
                           }
                           disabled={startingTraining || Boolean(trainingRunId)}
-                          className="mt-1 accent-orange"
+                          className="mt-1 shrink-0 accent-orange"
                         />
-                        <span>
+                        <span className="min-w-0">
                           <span className="block text-sm font-medium text-ink">
                             Hyperparameter tuning
                           </span>
@@ -1286,7 +1290,7 @@ export default function PreprocessingPage() {
                         </span>
                       </label>
 
-                      <label className="flex items-start gap-3 rounded-xl border border-surface-border p-4">
+                      <label className="flex min-w-0 items-start gap-3 rounded-xl border border-surface-border p-3 sm:p-4">
                         <input
                           type="checkbox"
                           checked={trainingConfig.ensemble}
@@ -1294,9 +1298,9 @@ export default function PreprocessingPage() {
                             updateTrainingConfig("ensemble", event.target.checked)
                           }
                           disabled={startingTraining || Boolean(trainingRunId)}
-                          className="mt-1 accent-orange"
+                          className="mt-1 shrink-0 accent-orange"
                         />
-                        <span>
+                        <span className="min-w-0">
                           <span className="block text-sm font-medium text-ink">
                             Ensemble evaluation
                           </span>
@@ -1307,7 +1311,7 @@ export default function PreprocessingPage() {
                       </label>
                     </div>
 
-                    <div className="grid gap-5 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
                       <NumberField
                         label="Time budget (seconds)"
                         value={trainingConfig.time_budget_s ?? ""}
@@ -1321,18 +1325,18 @@ export default function PreprocessingPage() {
                   </div>
 
                   {/* Advanced settings */}
-                  <div className="mt-6 overflow-hidden rounded-xl border border-surface-border">
+                  <div className="mt-6 min-w-0 overflow-hidden rounded-xl border border-surface-border">
                     <button
                       type="button"
                       onClick={() =>
                         setAdvancedSettingsOpen((value) => !value)
                       }
                       aria-expanded={advancedSettingsOpen}
-                      className="flex w-full items-center justify-between gap-3 bg-surface-page p-4 text-left"
+                      className="flex w-full items-center justify-between gap-3 bg-surface-page p-3 text-left sm:p-4"
                     >
-                      <span className="flex items-center gap-2">
-                        <Settings2 size={18} className="text-orange" />
-                        <span>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Settings2 size={18} className="shrink-0 text-orange" />
+                        <span className="min-w-0">
                           <span className="block text-sm font-semibold text-ink">
                             Advanced settings
                           </span>
@@ -1342,19 +1346,19 @@ export default function PreprocessingPage() {
                         </span>
                       </span>
                       {advancedSettingsOpen ? (
-                        <ChevronUp size={18} />
+                        <ChevronUp size={18} className="shrink-0" />
                       ) : (
-                        <ChevronDown size={18} />
+                        <ChevronDown size={18} className="shrink-0" />
                       )}
                     </button>
 
                     {advancedSettingsOpen && (
-                      <div className="space-y-6 p-4">
+                      <div className="min-w-0 space-y-6 p-3 sm:p-4">
                         <div>
                           <h4 className="mb-3 text-sm font-semibold text-ink">
                             Cross-validation and candidate selection
                           </h4>
-                          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
                             <NumberField
                               label="CV folds"
                               value={trainingConfig.cv_splits}
@@ -1386,7 +1390,7 @@ export default function PreprocessingPage() {
                           <h4 className="mb-3 text-sm font-semibold text-ink">
                             Hyperparameter tuning
                           </h4>
-                          <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                             <NumberField
                               label="Top models to tune"
                               value={trainingConfig.tune_top_n}
@@ -1410,7 +1414,7 @@ export default function PreprocessingPage() {
                           <h4 className="mb-3 text-sm font-semibold text-ink">
                             Ensemble configuration
                           </h4>
-                          <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                             <NumberField
                               label="Ensemble top K"
                               value={trainingConfig.ensemble_top_k}
@@ -1435,7 +1439,7 @@ export default function PreprocessingPage() {
                           <h4 className="mb-3 text-sm font-semibold text-ink">
                             Reproducibility and safeguards
                           </h4>
-                          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
                             <NumberField
                               label="Random state"
                               value={trainingConfig.random_state}
@@ -1465,7 +1469,7 @@ export default function PreprocessingPage() {
                             />
                           </div>
 
-                          <label className="mt-4 flex items-start gap-3 rounded-xl border border-surface-border p-4">
+                          <label className="mt-4 flex min-w-0 items-start gap-3 rounded-xl border border-surface-border p-3 sm:p-4">
                             <input
                               type="checkbox"
                               checked={trainingConfig.refit_on_all}
@@ -1476,9 +1480,9 @@ export default function PreprocessingPage() {
                                 )
                               }
                               disabled={startingTraining || Boolean(trainingRunId)}
-                              className="mt-1 accent-orange"
+                              className="mt-1 shrink-0 accent-orange"
                             />
-                            <span>
+                            <span className="min-w-0">
                               <span className="block text-sm font-medium text-ink">
                                 Refit selected model on all available data
                               </span>
@@ -1498,20 +1502,20 @@ export default function PreprocessingPage() {
                             Exclude specific models or restrict evaluation to selected models. Leave both empty to use the default candidate set.
                           </p>
 
-                          <div className="grid gap-5 md:grid-cols-2">
+                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
                             {[
                               ["exclude", "Exclude models"],
                               ["include_only", "Include only these models"],
                             ].map(([key, label]) => (
-                              <div key={key}>
+                              <div key={key} className="min-w-0">
                                 <p className="mb-2 text-sm font-medium text-ink">
                                   {label}
                                 </p>
-                                <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-surface-border p-3">
+                                <div className="max-h-48 space-y-2 overflow-y-auto overscroll-contain rounded-lg border border-surface-border p-3">
                                   {MODEL_OPTIONS.map((model) => (
                                     <label
                                       key={model}
-                                      className="flex items-center gap-2 text-sm text-ink-secondary"
+                                      className="flex min-w-0 items-center gap-2 text-sm text-ink-secondary"
                                     >
                                       <input
                                         type="checkbox"
@@ -1521,7 +1525,7 @@ export default function PreprocessingPage() {
                                           startingTraining ||
                                           Boolean(trainingRunId)
                                         }
-                                        className="accent-orange"
+                                        className="shrink-0 accent-orange"
                                       />
                                       {model}
                                     </label>
@@ -1549,16 +1553,16 @@ export default function PreprocessingPage() {
                   </div>
 
                   {trainingError && (
-                    <div className="mt-5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <div className="mt-5 flex min-w-0 items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                       <AlertTriangle size={17} className="mt-0.5 shrink-0" />
-                      <span>{trainingError}</span>
+                      <span className="break-words">{trainingError}</span>
                     </div>
                   )}
 
                   {trainingRunId && (
-                    <div className="mt-5 rounded-xl border border-surface-border p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
+                    <div className="mt-5 min-w-0 rounded-xl border border-surface-border p-3 sm:p-4">
+                      <div className="flex min-w-0 flex-col gap-3 min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between">
+                        <div className="min-w-0">
                           <p className="text-sm font-semibold text-ink">
                             AutoML training run
                           </p>
@@ -1568,7 +1572,7 @@ export default function PreprocessingPage() {
                         </div>
 
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          className={`max-w-full self-start rounded-full px-3 py-1 text-xs font-medium min-[480px]:self-auto ${
                             trainingStatus === "completed"
                               ? "bg-emerald-100 text-emerald-800"
                               : trainingStatus === "failed"
@@ -1587,16 +1591,18 @@ export default function PreprocessingPage() {
                       </div>
 
                       {trainingIsActive && (
-                        <div className="mt-4 flex items-center gap-3 text-sm text-ink-secondary">
-                          <LoaderCircle size={18} className="animate-spin" />
-                          AutoML is evaluating candidate models. This section updates automatically.
+                        <div className="mt-4 flex min-w-0 items-start gap-3 text-sm text-ink-secondary">
+                          <LoaderCircle size={18} className="shrink-0 animate-spin" />
+                          <span>
+                            AutoML is evaluating candidate models. This section updates automatically.
+                          </span>
                         </div>
                       )}
 
                       {trainingStatus === "completed" && (
                         <div className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
                           <div className="flex items-center gap-2 font-medium">
-                            <CheckCircle2 size={17} />
+                            <CheckCircle2 size={17} className="shrink-0" />
                             Training completed successfully.
                           </div>
                           <p className="mt-1">
@@ -1606,7 +1612,7 @@ export default function PreprocessingPage() {
                       )}
 
                       {trainingStatus === "failed" && (
-                        <p className="mt-3 text-sm text-red-700">
+                        <p className="mt-3 break-words text-sm text-red-700">
                           {trainingError || "Training failed. Check the backend logs."}
                         </p>
                       )}
@@ -1619,8 +1625,8 @@ export default function PreprocessingPage() {
                     </div>
                   )}
 
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-                    <p className="text-xs text-ink-muted">
+                  <div className="mt-5 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
+                    <p className="break-all text-xs text-ink-muted">
                       Preprocessing run:{" "}
                       <span className="font-medium text-ink-secondary">
                         {result.run_id || result.preprocessing_run_id}
@@ -1672,9 +1678,9 @@ export default function PreprocessingPage() {
 
             {/* JSON reports */}
             <Card>
-              <div className="space-y-5 p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
+              <div className="min-w-0 space-y-5 p-4 sm:p-5">
+                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
                     <h3 className="font-semibold text-ink">JSON reports</h3>
                     <p className="mt-1 text-sm text-ink-secondary">
                       Inspect and download the JSON artifacts saved for this run.
@@ -1714,7 +1720,7 @@ export default function PreprocessingPage() {
                           key={filename}
                           type="button"
                           onClick={() => setActiveReport(filename)}
-                          className={`rounded-lg border px-3 py-2 text-sm transition ${
+                          className={`max-w-full break-all rounded-lg border px-3 py-2 text-sm transition ${
                             activeReport === filename
                               ? "border-orange bg-orange-50 text-orange"
                               : "border-surface-border bg-white text-ink-secondary hover:bg-surface-page"
@@ -1725,8 +1731,8 @@ export default function PreprocessingPage() {
                       ))}
                     </div>
 
-                    <div className="overflow-hidden rounded-xl border border-surface-border">
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border bg-surface-page px-4 py-3">
+                    <div className="min-w-0 overflow-hidden rounded-xl border border-surface-border">
+                      <div className="flex min-w-0 flex-col gap-3 border-b border-surface-border bg-surface-page px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
                         <p className="break-all text-sm font-medium text-ink">
                           {activeReport}
                         </p>
@@ -1739,7 +1745,7 @@ export default function PreprocessingPage() {
                         </Button>
                       </div>
 
-                      <pre className="max-h-[520px] overflow-auto bg-white p-4 text-xs leading-6 text-ink">
+                      <pre className="max-h-[520px] overflow-auto whitespace-pre bg-white p-3 text-xs leading-6 text-ink sm:p-4">
                         {JSON.stringify(reports[activeReport] ?? {}, null, 2)}
                       </pre>
                     </div>
@@ -1754,7 +1760,7 @@ export default function PreprocessingPage() {
 
             {/* Preprocessing log */}
             <Card>
-              <div className="space-y-5 p-5">
+              <div className="min-w-0 space-y-5 p-4 sm:p-5">
                 <div>
                   <h3 className="font-semibold text-ink">
                     Preprocessing log
@@ -1766,7 +1772,7 @@ export default function PreprocessingPage() {
 
                 {preprocessingLogs.length > 0 ? (
                   <>
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-4">
                       {[
                         ["Columns affected", logSummary.columns, "Unique columns in the log"],
                         ["Drop actions", logSummary.dropped, "Logged column-removal actions"],
@@ -1779,10 +1785,10 @@ export default function PreprocessingPage() {
                       ].map(([label, value, detail]) => (
                         <div
                           key={label}
-                          className="rounded-xl border border-surface-border bg-surface-page p-4"
+                          className="min-w-0 rounded-xl border border-surface-border bg-surface-page p-4"
                         >
                           <p className="text-sm text-ink-secondary">{label}</p>
-                          <p className="mt-2 text-2xl font-semibold text-ink">
+                          <p className="mt-2 break-words text-2xl font-semibold text-ink">
                             {value}
                           </p>
                           <p className="mt-1 text-xs text-ink-muted">
@@ -1792,20 +1798,20 @@ export default function PreprocessingPage() {
                       ))}
                     </div>
 
-                    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_190px]">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_190px]">
                       <input
                         value={logSearch}
                         onChange={(event) => setLogSearch(event.target.value)}
                         placeholder="Search column, action, reason or rule..."
                         aria-label="Search preprocessing logs"
-                        className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-orange"
+                        className="w-full min-w-0 rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-orange"
                       />
 
                       <select
                         value={logFilter}
                         onChange={(event) => setLogFilter(event.target.value)}
                         aria-label="Filter preprocessing logs"
-                        className="w-full rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-orange"
+                        className="w-full min-w-0 rounded-lg border border-surface-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-orange"
                       >
                         {[
                           "All",
@@ -1855,7 +1861,7 @@ export default function PreprocessingPage() {
                         return (
                           <div
                             key={`${log.column ?? "dataset"}-${log.action ?? "event"}-${index}`}
-                            className="overflow-hidden rounded-xl border border-surface-border"
+                            className="min-w-0 overflow-hidden rounded-xl border border-surface-border"
                           >
                             <button
                               type="button"
@@ -1866,29 +1872,29 @@ export default function PreprocessingPage() {
                                 }))
                               }
                               aria-expanded={isExpanded}
-                              className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-surface-page"
+                              className="flex w-full min-w-0 flex-col items-start justify-between gap-3 p-3 text-left transition hover:bg-surface-page sm:flex-row sm:items-center sm:p-4"
                             >
                               <div className="min-w-0">
-                                <p className="truncate font-medium text-ink">
+                                <p className="break-words font-medium text-ink">
                                   {title}
                                 </p>
-                                <p className="mt-1 text-sm text-ink-secondary">
+                                <p className="mt-1 break-words text-sm text-ink-secondary">
                                   {log.reason || log.stage || (log.message ? "Recorded event" : action)}
                                 </p>
                               </div>
-                              <span className="shrink-0 rounded-full border border-surface-border bg-surface-page px-2.5 py-1 text-xs text-ink-secondary">
+                              <span className="max-w-full shrink-0 break-words rounded-full border border-surface-border bg-surface-page px-2.5 py-1 text-xs text-ink-secondary">
                                 {action}
                               </span>
                             </button>
 
                             {isExpanded && (
-                              <div className="space-y-3 border-t border-surface-border bg-surface-page p-4">
+                              <div className="min-w-0 space-y-3 border-t border-surface-border bg-surface-page p-3 sm:p-4">
                                 {details.length > 0 && (
-                                  <dl className="grid gap-3 sm:grid-cols-2">
+                                  <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {details.map(([label, value]) => (
                                       <div
                                         key={label}
-                                        className="rounded-lg bg-white p-3"
+                                        className="min-w-0 rounded-lg bg-white p-3"
                                       >
                                         <dt className="text-xs text-ink-muted">
                                           {label}
@@ -1942,9 +1948,9 @@ export default function PreprocessingPage() {
 
         {/* Recent preprocessing runs */}
         <Card>
-          <div className="p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
+          <div className="min-w-0 p-4 sm:p-5">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="min-w-0">
                 <h2 className="font-semibold text-ink">Recent runs</h2>
                 <p className="mt-1 text-sm text-ink-secondary">
                   Previous preprocessing runs for the selected dataset.
@@ -1959,7 +1965,7 @@ export default function PreprocessingPage() {
                   )
                 }
                 disabled={!datasetId}
-                className="rounded-lg p-2 text-ink-secondary hover:bg-surface-page"
+                className="shrink-0 rounded-lg p-2 text-ink-secondary hover:bg-surface-page"
                 aria-label="Refresh run history"
               >
                 <RefreshCw size={16} />
@@ -1971,8 +1977,8 @@ export default function PreprocessingPage() {
                 No preprocessing runs yet.
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+              <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain">
+                <table className="w-full min-w-[680px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-surface-border text-ink-muted">
                       <th className="py-3 pr-4 font-medium">Target</th>

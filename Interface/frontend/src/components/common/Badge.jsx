@@ -1,3 +1,4 @@
+
 const TONES = {
   neutral: "bg-surface-page text-ink-secondary border-surface-border",
   success: "bg-[#EAF7F1] text-state-success border-[#CDEEE0]",
@@ -10,7 +11,7 @@ const TONES = {
 export default function Badge({ children, tone = "neutral", className = "" }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md border ${TONES[tone]} ${className}`}
+      className={`inline-flex max-w-full items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${TONES[tone]} ${className}`}
     >
       {children}
     </span>

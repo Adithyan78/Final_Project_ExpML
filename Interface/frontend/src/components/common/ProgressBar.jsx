@@ -1,3 +1,4 @@
+
 const TONES = {
   orange: "bg-orange",
   success: "bg-state-success",
@@ -13,16 +14,22 @@ export default function ProgressBar({
   className = "",
 }) {
   const clamped = Math.min(100, Math.max(0, value));
+
   return (
-    <div className={className}>
-      <div className={`w-full ${height} bg-surface-border rounded-full overflow-hidden`}>
+    <div className={`w-full min-w-0 ${className}`}>
+      <div
+        className={`w-full ${height} overflow-hidden rounded-full bg-surface-border`}
+      >
         <div
           className={`${height} ${TONES[tone]} rounded-full transition-all duration-500 ease-out`}
           style={{ width: `${clamped}%` }}
         />
       </div>
+
       {showLabel && (
-        <span className="text-xs text-ink-muted mt-1 inline-block">{clamped}%</span>
+        <span className="mt-1 inline-block text-xs text-ink-muted">
+          {clamped}%
+        </span>
       )}
     </div>
   );

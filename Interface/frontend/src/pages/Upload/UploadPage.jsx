@@ -150,11 +150,12 @@ export default function UploadPage() {
 
   return (
     <AppShell>
-      <div className="mb-6">
-        <h1 className="text-[26px] font-semibold text-ink tracking-tight">
+      <div className="mb-5 sm:mb-6 min-w-0">
+        <h1 className="text-2xl sm:text-[26px] font-semibold text-ink tracking-tight">
           Upload Dataset
         </h1>
-        <p className="text-sm text-ink-secondary mt-1">
+
+        <p className="text-sm text-ink-secondary mt-1 leading-relaxed max-w-2xl">
           Upload a CSV file to analyze its quality and prepare your AutoML pipeline.
         </p>
       </div>
@@ -174,10 +175,10 @@ export default function UploadPage() {
           onChange={(event) => setTargetColumn(event.target.value)}
           placeholder="e.g. Survived"
           disabled={uploading}
-          className="w-full sm:max-w-md rounded-lg border border-surface-border bg-white px-3 py-2 text-sm text-ink outline-none focus:border-orange disabled:opacity-60"
+          className="w-full sm:max-w-md min-w-0 rounded-lg border border-surface-border bg-white px-3 py-2.5 sm:py-2 text-sm text-ink outline-none focus:border-orange disabled:opacity-60"
         />
 
-        <p className="text-xs text-ink-muted mt-2">
+        <p className="text-xs text-ink-muted mt-2 leading-relaxed">
           Enter the exact column name you want to predict. Leave blank for
           profiling without a target. You can also choose an objective later.
         </p>
@@ -188,7 +189,7 @@ export default function UploadPage() {
       {uploading && (
         <div
           role="status"
-          className="mt-4 rounded-lg border border-surface-border bg-surface-page p-4 text-sm text-ink-secondary"
+          className="mt-4 rounded-lg border border-surface-border bg-surface-page p-3 sm:p-4 text-sm text-ink-secondary leading-relaxed"
         >
           Uploading and analyzing your dataset. Larger files may take a little
           longer...
@@ -198,7 +199,7 @@ export default function UploadPage() {
       {error && (
         <div
           role="alert"
-          className="mt-4 rounded-lg border border-state-error/30 bg-[#FCEAEA] p-3 text-sm text-state-error"
+          className="mt-4 rounded-lg border border-state-error/30 bg-[#FCEAEA] p-3 text-sm text-state-error leading-relaxed break-words"
         >
           {error}
         </div>
@@ -207,14 +208,14 @@ export default function UploadPage() {
       {success && (
         <div
           role="status"
-          className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
+          className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800 leading-relaxed break-words"
         >
           {success}
         </div>
       )}
 
-      <Card className="mt-6" padding="p-0">
-        <div className="px-5 pt-5">
+      <Card className="mt-5 sm:mt-6" padding="p-0">
+        <div className="px-4 sm:px-5 pt-4 sm:pt-5">
           <CardHeader
             title="Recent Uploads"
             subtitle="Select a dataset to analyze in your workspace"
@@ -223,7 +224,7 @@ export default function UploadPage() {
                 type="button"
                 onClick={loadDatasets}
                 disabled={loading || uploading}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-orange hover:text-orange-light disabled:opacity-50"
+                className="inline-flex min-h-9 shrink-0 items-center gap-1.5 text-xs font-medium text-orange hover:text-orange-light disabled:opacity-50"
               >
                 <RefreshCw
                   size={13}
@@ -235,29 +236,47 @@ export default function UploadPage() {
           />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-t border-surface-border text-left text-[11px] uppercase tracking-wide text-ink-muted">
-                <th className="font-medium px-5 py-2.5">Select</th>
-                <th className="font-medium px-5 py-2.5">Name</th>
-                <th className="font-medium px-5 py-2.5">Rows</th>
-                <th className="font-medium px-5 py-2.5">Columns</th>
-                <th className="font-medium px-5 py-2.5">Uploaded At</th>
-                <th className="font-medium px-5 py-2.5 text-right">Action</th>
+                <th className="font-medium px-4 sm:px-5 py-3 whitespace-nowrap">
+                  Select
+                </th>
+                <th className="font-medium px-4 sm:px-5 py-3 whitespace-nowrap">
+                  Name
+                </th>
+                <th className="font-medium px-4 sm:px-5 py-3 whitespace-nowrap">
+                  Rows
+                </th>
+                <th className="font-medium px-4 sm:px-5 py-3 whitespace-nowrap">
+                  Columns
+                </th>
+                <th className="font-medium px-4 sm:px-5 py-3 whitespace-nowrap">
+                  Uploaded At
+                </th>
+                <th className="font-medium px-4 sm:px-5 py-3 text-right whitespace-nowrap">
+                  Action
+                </th>
               </tr>
             </thead>
 
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-ink-muted">
+                  <td
+                    colSpan={6}
+                    className="px-4 sm:px-5 py-8 text-center text-ink-muted"
+                  >
                     Loading datasets...
                   </td>
                 </tr>
               ) : uploads.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-ink-muted">
+                  <td
+                    colSpan={6}
+                    className="px-4 sm:px-5 py-8 text-center text-ink-muted"
+                  >
                     No datasets yet. Upload a CSV to get started.
                   </td>
                 </tr>
@@ -275,7 +294,7 @@ export default function UploadPage() {
                           : "hover:bg-surface-page/60"
                       }`}
                     >
-                      <td className="px-5 py-3">
+                      <td className="px-4 sm:px-5 py-3">
                         <button
                           type="button"
                           onClick={(event) => {
@@ -284,7 +303,7 @@ export default function UploadPage() {
                           }}
                           aria-label={`Select ${ds.name}`}
                           aria-pressed={selected}
-                          className={`flex h-6 w-6 items-center justify-center rounded-full border ${
+                          className={`flex h-7 w-7 items-center justify-center rounded-full border ${
                             selected
                               ? "border-orange bg-orange text-white"
                               : "border-surface-border text-transparent"
@@ -294,7 +313,7 @@ export default function UploadPage() {
                         </button>
                       </td>
 
-                      <td className="px-5 py-3 font-medium text-ink whitespace-nowrap">
+                      <td className="px-4 sm:px-5 py-3 font-medium text-ink whitespace-nowrap">
                         <div>{ds.name}</div>
                         {typeof ds.size_bytes === "number" && (
                           <div className="text-xs font-normal text-ink-muted mt-0.5">
@@ -303,19 +322,19 @@ export default function UploadPage() {
                         )}
                       </td>
 
-                      <td className="px-5 py-3 text-ink-secondary">
+                      <td className="px-4 sm:px-5 py-3 text-ink-secondary whitespace-nowrap">
                         {Number(ds.n_rows ?? 0).toLocaleString()}
                       </td>
 
-                      <td className="px-5 py-3 text-ink-secondary">
+                      <td className="px-4 sm:px-5 py-3 text-ink-secondary whitespace-nowrap">
                         {ds.n_cols ?? 0}
                       </td>
 
-                      <td className="px-5 py-3 text-ink-muted whitespace-nowrap">
+                      <td className="px-4 sm:px-5 py-3 text-ink-muted whitespace-nowrap">
                         {formatDate(ds.created_at)}
                       </td>
 
-                      <td className="px-5 py-3">
+                      <td className="px-4 sm:px-5 py-3">
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
@@ -325,7 +344,7 @@ export default function UploadPage() {
                                 state: { datasetId: ds.id },
                               });
                             }}
-                            className="p-1.5 rounded-md text-ink-secondary hover:text-orange hover:bg-orange-50 transition-default"
+                            className="flex h-9 w-9 items-center justify-center rounded-md text-ink-secondary hover:text-orange hover:bg-orange-50 transition-default"
                             aria-label={`Analyze ${ds.name}`}
                             title="Analyze this dataset"
                           >
@@ -339,7 +358,7 @@ export default function UploadPage() {
                               handleDelete(ds);
                             }}
                             disabled={deletingId === ds.id || uploading}
-                            className="p-1.5 rounded-md text-ink-secondary hover:text-state-error hover:bg-[#FCEAEA] transition-default disabled:opacity-40"
+                            className="flex h-9 w-9 items-center justify-center rounded-md text-ink-secondary hover:text-state-error hover:bg-[#FCEAEA] transition-default disabled:opacity-40"
                             aria-label={`Delete ${ds.name}`}
                             title="Delete dataset"
                           >
@@ -360,19 +379,21 @@ export default function UploadPage() {
         </div>
       </Card>
 
-      <div className="mt-6 flex flex-col items-end gap-2">
-        <p className="text-xs text-ink-muted">
+      <div className="mt-5 sm:mt-6 flex flex-col items-stretch sm:items-end gap-3">
+        <p className="text-xs text-ink-muted text-left sm:text-right break-words">
           {selectedDatasetId
             ? `Selected: ${uploads.find((ds) => ds.id === selectedDatasetId)?.name ?? "Dataset"}`
             : "Select a dataset to continue."}
         </p>
 
-        <Button
-          onClick={continueToPreprocessing}
-          disabled={!selectedDatasetId || loading || uploading || Boolean(deletingId)}
-        >
-          Continue to Dataset Analyzer
-        </Button>
+        <div className="w-full sm:w-auto">
+          <Button
+            onClick={continueToPreprocessing}
+            disabled={!selectedDatasetId || loading || uploading || Boolean(deletingId)}
+          >
+            Continue to Dataset Analyzer
+          </Button>
+        </div>
       </div>
     </AppShell>
   );

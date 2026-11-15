@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import { UploadCloud, FileSpreadsheet } from "lucide-react";
 import Button from "../common/Button";
@@ -26,33 +27,35 @@ export default function DropzoneUploader({ onFileSelected }) {
         setIsDragging(false);
         handleFiles(e.dataTransfer.files);
       }}
-      className={`flex flex-col items-center justify-center text-center border-2 border-dashed rounded-card py-14 px-6 transition-default ${
+      className={`flex min-w-0 flex-col items-center justify-center rounded-card border-2 border-dashed px-4 py-10 text-center transition-default sm:px-6 sm:py-14 ${
         isDragging
           ? "border-orange bg-orange-50/50"
           : "border-surface-border bg-white hover:border-ink/20"
       }`}
     >
-      <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-4">
+      <div className="mb-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-50 sm:h-14 sm:w-14">
         {fileName ? (
-          <FileSpreadsheet size={20} className="text-orange" />
+          <FileSpreadsheet size={21} className="text-orange sm:h-6 sm:w-6" />
         ) : (
-          <UploadCloud size={20} className="text-orange" />
+          <UploadCloud size={21} className="text-orange sm:h-6 sm:w-6" />
         )}
       </div>
 
       {fileName ? (
         <>
-          <p className="text-sm font-medium text-ink">{fileName}</p>
-          <p className="text-xs text-ink-secondary mt-1">
+          <p className="max-w-full break-all text-sm font-medium text-ink">
+            {fileName}
+          </p>
+          <p className="mt-1 text-xs text-ink-secondary">
             Ready to analyze
           </p>
         </>
       ) : (
         <>
-          <p className="text-sm font-medium text-ink">
+          <p className="text-sm font-medium leading-relaxed text-ink sm:text-base">
             Drag and drop your dataset here
           </p>
-          <p className="text-xs text-ink-secondary mt-1">or</p>
+          <p className="mt-1 text-xs text-ink-secondary">or</p>
         </>
       )}
 
@@ -63,16 +66,17 @@ export default function DropzoneUploader({ onFileSelected }) {
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
+
       <Button
         size="sm"
         variant="secondary"
-        className="mt-3"
+        className="mt-4 w-full justify-center sm:w-auto"
         onClick={() => inputRef.current?.click()}
       >
         {fileName ? "Choose a different file" : "Choose File"}
       </Button>
 
-      <p className="text-[11px] text-ink-muted mt-5">
+      <p className="mt-5 max-w-full text-[10px] leading-relaxed text-ink-muted sm:text-[11px]">
         Supported format: CSV &middot; Maximum file size: 50 MB
       </p>
     </div>

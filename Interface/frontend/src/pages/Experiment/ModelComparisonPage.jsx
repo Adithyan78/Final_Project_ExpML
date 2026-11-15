@@ -165,18 +165,18 @@ async function fetchArtifactJson(trainingRunId, filename) {
 
 function MetricCard({ label, value, icon: Icon, description }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-ink-secondary">{label}</p>
-        <Icon size={17} className="text-orange" />
+    <Card className="min-w-0 p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 text-xs text-ink-secondary">{label}</p>
+        <Icon size={17} className="shrink-0 text-orange" />
       </div>
 
-      <p className="text-xl font-semibold text-ink mt-2">
+      <p className="mt-2 break-words text-xl font-semibold text-ink">
         {value}
       </p>
 
       {description && (
-        <p className="text-[11px] text-ink-secondary mt-1">
+        <p className="mt-1 text-[11px] text-ink-secondary">
           {description}
         </p>
       )}
@@ -186,28 +186,31 @@ function MetricCard({ label, value, icon: Icon, description }) {
 
 function SectionHeading({ title, description, action }) {
   return (
-    <div className="flex flex-wrap justify-between items-start gap-3 mb-5">
-      <div>
+    <div className="mb-4 flex min-w-0 flex-col items-start justify-between gap-2 sm:mb-5 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="min-w-0">
         <h2 className="text-sm font-semibold text-ink">{title}</h2>
 
         {description && (
-          <p className="text-xs text-ink-secondary mt-1">
+          <p className="mt-1 text-xs leading-relaxed text-ink-secondary">
             {description}
           </p>
         )}
       </div>
 
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
 
 function ChartCard({ title, description, children, height = 300 }) {
   return (
-    <Card className="p-5 min-w-0">
+    <Card className="min-w-0 p-3 sm:p-5">
       <SectionHeading title={title} description={description} />
 
-      <div style={{ height }} className="w-full min-w-0">
+      <div
+        style={{ height }}
+        className="w-full min-w-0 max-w-full"
+      >
         {children}
       </div>
     </Card>
@@ -216,7 +219,7 @@ function ChartCard({ title, description, children, height = 300 }) {
 
 function EmptyChart({ message = "No data available for this visualization." }) {
   return (
-    <div className="h-full flex items-center justify-center text-xs text-ink-secondary">
+    <div className="flex h-full items-center justify-center px-3 text-center text-xs text-ink-secondary">
       {message}
     </div>
   );
@@ -226,11 +229,13 @@ function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-3 shadow-lg">
-      <p className="text-xs font-semibold text-ink mb-2">{label}</p>
+    <div className="max-w-[240px] rounded-lg border border-border bg-surface p-3 shadow-lg">
+      <p className="mb-2 break-words text-xs font-semibold text-ink">
+        {label}
+      </p>
 
       {payload.map((item, index) => (
-        <p key={index} className="text-xs text-ink-secondary">
+        <p key={index} className="break-words text-xs text-ink-secondary">
           {item.name}:{" "}
           {typeof item.value === "number"
             ? `${(item.value * 100).toFixed(2)}%`
@@ -256,27 +261,27 @@ function ConfusionMatrix({ evaluation }) {
   const maxValue = Math.max(...matrix.flat(), 1);
 
   return (
-    <div className="h-full flex flex-col items-center justify-center">
-      <p className="text-[10px] text-ink-secondary mb-4">
+    <div className="flex h-full min-w-0 flex-col items-center justify-center">
+      <p className="mb-3 text-[10px] text-ink-secondary sm:mb-4">
         Predicted class
       </p>
 
-      <div className="flex gap-3 items-center">
-        <div className="[writing-mode:vertical-rl] rotate-180 text-[10px] text-ink-secondary">
+      <div className="flex w-full min-w-0 items-center justify-center gap-2 sm:gap-3">
+        <div className="[writing-mode:vertical-rl] rotate-180 shrink-0 text-[10px] text-ink-secondary">
           Actual class
         </div>
 
-        <div>
+        <div className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain pb-2">
           <div
-            className="grid gap-2"
+            className="grid gap-1.5 sm:gap-2"
             style={{
-              gridTemplateColumns: `repeat(${classes.length}, minmax(75px, 110px))`,
+              gridTemplateColumns: `repeat(${classes.length}, minmax(65px, 110px))`,
             }}
           >
             {classes.map((className) => (
               <div
                 key={className}
-                className="text-center text-xs text-ink-secondary pb-1"
+                className="break-words pb-1 text-center text-[10px] text-ink-secondary sm:text-xs"
               >
                 {className}
               </div>
@@ -289,7 +294,7 @@ function ConfusionMatrix({ evaluation }) {
                 return (
                   <div
                     key={`${rowIndex}-${colIndex}`}
-                    className="rounded-xl min-h-[85px] flex flex-col items-center justify-center border border-border"
+                    className="flex min-h-[70px] flex-col items-center justify-center rounded-lg border border-border p-1.5 sm:min-h-[85px] sm:rounded-xl sm:p-2"
                     style={{
                       backgroundColor:
                         intensity > 0.5
@@ -297,11 +302,11 @@ function ConfusionMatrix({ evaluation }) {
                           : `rgba(249, 115, 22, ${0.08 + intensity * 0.3})`,
                     }}
                   >
-                    <span className="text-xl font-semibold text-ink">
+                    <span className="text-base font-semibold text-ink sm:text-xl">
                       {value}
                     </span>
 
-                    <span className="text-[10px] text-ink-secondary mt-1">
+                    <span className="mt-1 text-center text-[9px] text-ink-secondary sm:text-[10px]">
                       Actual {classes[rowIndex]}
                     </span>
                   </div>
@@ -310,7 +315,7 @@ function ConfusionMatrix({ evaluation }) {
             )}
           </div>
 
-          <div className="flex justify-center gap-4 mt-4 text-[10px] text-ink-secondary">
+          <div className="mt-3 flex justify-center gap-3 text-[9px] text-ink-secondary sm:mt-4 sm:gap-4 sm:text-[10px]">
             <span>Rows: actual</span>
             <span>Columns: predicted</span>
           </div>
@@ -630,15 +635,17 @@ export default function ModelComparisonPage() {
   if (loading) {
     return (
       <AppShell>
-        <Card className="flex flex-col items-center justify-center py-16">
-          <RefreshCw size={22} className="animate-spin text-orange mb-3" />
-          <p className="text-sm font-medium text-ink">
-            Loading model results...
-          </p>
-          <p className="text-xs text-ink-secondary mt-1">
-            Retrieving your training run.
-          </p>
-        </Card>
+        <div className="mx-auto w-full min-w-0 max-w-7xl p-3 sm:p-5 md:p-8">
+          <Card className="flex flex-col items-center justify-center px-4 py-12 text-center sm:py-16">
+            <RefreshCw size={22} className="mb-3 animate-spin text-orange" />
+            <p className="text-sm font-medium text-ink">
+              Loading model results...
+            </p>
+            <p className="mt-1 text-xs text-ink-secondary">
+              Retrieving your training run.
+            </p>
+          </Card>
+        </div>
       </AppShell>
     );
   }
@@ -646,25 +653,29 @@ export default function ModelComparisonPage() {
   if (error && !run) {
     return (
       <AppShell>
-        <Card className="p-6 text-center">
-          <AlertTriangle
-            size={24}
-            className="mx-auto text-red-500 mb-3"
-          />
+        <div className="mx-auto w-full min-w-0 max-w-7xl p-3 sm:p-5 md:p-8">
+          <Card className="p-4 text-center sm:p-6">
+            <AlertTriangle
+              size={24}
+              className="mx-auto mb-3 text-red-500"
+            />
 
-          <h2 className="text-sm font-semibold text-ink">
-            Unable to load results
-          </h2>
+            <h2 className="text-sm font-semibold text-ink">
+              Unable to load results
+            </h2>
 
-          <p className="text-xs text-ink-secondary mt-2">{error}</p>
+            <p className="mt-2 break-words text-xs text-ink-secondary">
+              {error}
+            </p>
 
-          <button
-            onClick={handleRefresh}
-            className="mt-4 px-4 py-2 rounded-lg bg-orange text-white text-xs"
-          >
-            Try again
-          </button>
-        </Card>
+            <button
+              onClick={handleRefresh}
+              className="mt-4 min-h-10 rounded-lg bg-orange px-4 py-2 text-xs text-white"
+            >
+              Try again
+            </button>
+          </Card>
+        </div>
       </AppShell>
     );
   }
@@ -675,25 +686,25 @@ export default function ModelComparisonPage() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="mx-auto w-full min-w-0 max-w-7xl space-y-5 p-3 sm:space-y-6 sm:p-5 md:p-8">
 
         {/* Header */}
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-ink">
+        <div className="flex min-w-0 flex-col items-start justify-between gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold text-ink sm:text-2xl">
                 Model Results
               </h1>
 
               {run?.status === "completed" && (
-                <span className="text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-600">
+                <span className="rounded-full bg-green-500/10 px-2 py-1 text-[10px] text-green-600">
                   Completed
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-ink-secondary mt-1">
+            <p className="mt-1 text-xs leading-relaxed text-ink-secondary">
               Compare models, evaluate performance and inspect generalization.
             </p>
           </div>
@@ -701,7 +712,7 @@ export default function ModelComparisonPage() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-xs text-ink hover:bg-surface-secondary disabled:opacity-50"
+            className="flex min-h-10 w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-xs text-ink hover:bg-surface-secondary disabled:opacity-50 sm:w-auto"
           >
             <RefreshCw
               size={14}
@@ -714,16 +725,16 @@ export default function ModelComparisonPage() {
         {/* Training status */}
 
         {run?.status !== "completed" && (
-          <Card className="p-5">
-            <div className="flex items-start gap-3">
-              <Activity size={20} className="text-orange mt-1" />
+          <Card className="min-w-0 p-4 sm:p-5">
+            <div className="flex min-w-0 items-start gap-3">
+              <Activity size={20} className="mt-1 shrink-0 text-orange" />
 
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-ink">
                   Training {run?.status || "unknown"}
                 </h2>
 
-                <p className="text-xs text-ink-secondary mt-1">
+                <p className="mt-1 break-words text-xs leading-relaxed text-ink-secondary">
                   {run?.status === "failed"
                     ? run.error || "Training failed."
                     : run?.status === "cancelled"
@@ -740,40 +751,40 @@ export default function ModelComparisonPage() {
 
             {/* Model selection summary */}
 
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy size={17} className="text-orange" />
+            <div className="min-w-0">
+              <div className="mb-3 flex items-center gap-2">
+                <Trophy size={17} className="shrink-0 text-orange" />
                 <h2 className="text-sm font-semibold text-ink">
                   Model selection summary
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                <Card className="p-5">
-                  <div className="flex items-center justify-between gap-2">
+              <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+                <Card className="min-w-0 p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs text-ink-secondary">
                       AutoML selected model
                     </span>
 
-                    <span className="text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-600">
+                    <span className="rounded-full bg-green-500/10 px-2 py-1 text-[10px] text-green-600">
                       Selected
                     </span>
                   </div>
 
-                  <h2 className="text-2xl font-semibold text-ink mt-3">
+                  <h2 className="mt-3 break-words text-xl font-semibold text-ink sm:text-2xl">
                     {bestModel}
                   </h2>
 
-                  <p className="text-xs text-ink-secondary mt-1">
+                  <p className="mt-1 text-xs leading-relaxed text-ink-secondary">
                     Selected using {formatLabel(primaryMetric)} cross-validation performance.
                   </p>
 
-                  <div className="mt-5">
+                  <div className="mt-4 sm:mt-5">
                     <p className="text-xs text-ink-secondary">
                       Cross-validation score
                     </p>
 
-                    <p className="text-3xl font-semibold text-orange mt-1">
+                    <p className="mt-1 text-2xl font-semibold text-orange sm:text-3xl">
                       {formatMetric(
                         summary.best_cv_score ??
                           getScore(bestRow, primaryMetric),
@@ -783,31 +794,31 @@ export default function ModelComparisonPage() {
                   </div>
                 </Card>
 
-                <Card className="p-5">
-                  <div className="flex items-center justify-between gap-2">
+                <Card className="min-w-0 p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs text-ink-secondary">
                       Highest test performer
                     </span>
 
-                    <span className="text-[10px] px-2 py-1 rounded-full bg-orange/10 text-orange">
+                    <span className="rounded-full bg-orange/10 px-2 py-1 text-[10px] text-orange">
                       Held-out test
                     </span>
                   </div>
 
-                  <h2 className="text-2xl font-semibold text-ink mt-3">
+                  <h2 className="mt-3 break-words text-xl font-semibold text-ink sm:text-2xl">
                     {bestTestRow?.algorithm || "Unavailable"}
                   </h2>
 
-                  <p className="text-xs text-ink-secondary mt-1">
+                  <p className="mt-1 text-xs leading-relaxed text-ink-secondary">
                     Highest recorded test {formatLabel(primaryMetric)}.
                   </p>
 
-                  <div className="mt-5">
+                  <div className="mt-4 sm:mt-5">
                     <p className="text-xs text-ink-secondary">
                       Test score
                     </p>
 
-                    <p className="text-3xl font-semibold text-orange mt-1">
+                    <p className="mt-1 text-2xl font-semibold text-orange sm:text-3xl">
                       {formatMetric(
                         getScore(bestTestRow, primaryMetric, "test"),
                         primaryMetric
@@ -820,7 +831,7 @@ export default function ModelComparisonPage() {
 
             {/* Overview cards */}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <MetricCard
                 label="Models screened"
                 value={summary.models_screened ?? "—"}
@@ -848,13 +859,13 @@ export default function ModelComparisonPage() {
 
             {/* Dataset overview */}
 
-            <Card className="p-5">
+            <Card className="min-w-0 p-4 sm:p-5">
               <SectionHeading
                 title="Training overview"
                 description="Dataset and experiment information."
               />
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-5">
+              <div className="grid min-w-0 grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 xl:grid-cols-5">
                 {[
                   ["Task", formatLabel(run.task || summary.task || "—")],
                   ["Primary metric", formatLabel(primaryMetric)],
@@ -862,9 +873,9 @@ export default function ModelComparisonPage() {
                   ["Test rows", summary.n_test ?? "—"],
                   ["Features", summary.n_features ?? "—"],
                 ].map(([label, value]) => (
-                  <div key={label}>
+                  <div key={label} className="min-w-0">
                     <p className="text-xs text-ink-secondary">{label}</p>
-                    <p className="text-sm font-semibold text-ink mt-1">
+                    <p className="mt-1 break-words text-sm font-semibold text-ink">
                       {value}
                     </p>
                   </div>
@@ -874,13 +885,13 @@ export default function ModelComparisonPage() {
 
             {/* Performance analytics */}
 
-            <div>
+            <div className="min-w-0">
               <SectionHeading
                 title="Performance analytics"
                 description="Visual comparison of model scores across the evaluation pipeline."
               />
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <div className="grid min-w-0 grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2">
 
                 <ChartCard
                   title="CV vs test performance"
@@ -890,7 +901,7 @@ export default function ModelComparisonPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={performanceData}
-                        margin={{ top: 10, right: 10, left: -15, bottom: 55 }}
+                        margin={{ top: 10, right: 5, left: -20, bottom: 55 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis
@@ -898,15 +909,17 @@ export default function ModelComparisonPage() {
                           angle={-25}
                           textAnchor="end"
                           interval={0}
-                          tick={{ fontSize: 10 }}
+                          tick={{ fontSize: 9 }}
+                          height={65}
                         />
                         <YAxis
                           domain={[0, 1]}
                           tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-                          tick={{ fontSize: 10 }}
+                          tick={{ fontSize: 9 }}
+                          width={42}
                         />
                         <Tooltip content={<ChartTooltip />} />
-                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        <Legend wrapperStyle={{ fontSize: 10 }} />
                         <Bar
                           dataKey="cv"
                           name="CV mean"
@@ -934,7 +947,7 @@ export default function ModelComparisonPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={stabilityData}
-                        margin={{ top: 15, right: 15, left: -15, bottom: 55 }}
+                        margin={{ top: 15, right: 5, left: -20, bottom: 55 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis
@@ -942,12 +955,14 @@ export default function ModelComparisonPage() {
                           angle={-25}
                           textAnchor="end"
                           interval={0}
-                          tick={{ fontSize: 10 }}
+                          tick={{ fontSize: 9 }}
+                          height={65}
                         />
                         <YAxis
                           domain={[0, 1]}
                           tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-                          tick={{ fontSize: 10 }}
+                          tick={{ fontSize: 9 }}
+                          width={42}
                         />
                         <Tooltip content={<ChartTooltip />} />
                         <Bar
@@ -980,15 +995,15 @@ export default function ModelComparisonPage() {
                       <BarChart
                         data={timeData}
                         layout="vertical"
-                        margin={{ top: 5, right: 25, left: 15, bottom: 5 }}
+                        margin={{ top: 5, right: 15, left: 5, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10 }} />
+                        <XAxis type="number" tick={{ fontSize: 9 }} />
                         <YAxis
                           type="category"
                           dataKey="model"
-                          width={125}
-                          tick={{ fontSize: 10 }}
+                          width={95}
+                          tick={{ fontSize: 9 }}
                         />
                         <Tooltip />
                         <Bar
@@ -1013,15 +1028,15 @@ export default function ModelComparisonPage() {
                       <BarChart
                         data={timeData}
                         layout="vertical"
-                        margin={{ top: 5, right: 25, left: 15, bottom: 5 }}
+                        margin={{ top: 5, right: 15, left: 5, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10 }} />
+                        <XAxis type="number" tick={{ fontSize: 9 }} />
                         <YAxis
                           type="category"
                           dataKey="model"
-                          width={125}
-                          tick={{ fontSize: 10 }}
+                          width={95}
+                          tick={{ fontSize: 9 }}
                         />
                         <Tooltip />
                         <Bar
@@ -1045,7 +1060,7 @@ export default function ModelComparisonPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={rocData}
-                        margin={{ top: 10, right: 10, left: -15, bottom: 55 }}
+                        margin={{ top: 10, right: 5, left: -20, bottom: 55 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis
@@ -1053,12 +1068,14 @@ export default function ModelComparisonPage() {
                           angle={-25}
                           textAnchor="end"
                           interval={0}
-                          tick={{ fontSize: 10 }}
+                          tick={{ fontSize: 9 }}
+                          height={65}
                         />
                         <YAxis
                           domain={[0, 1]}
                           tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-                          tick={{ fontSize: 10 }}
+                          tick={{ fontSize: 9 }}
+                          width={42}
                         />
                         <Tooltip content={<ChartTooltip />} />
                         <Bar
@@ -1082,7 +1099,7 @@ export default function ModelComparisonPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={diagnosticData}
-                        margin={{ top: 10, right: 10, left: -15, bottom: 55 }}
+                        margin={{ top: 10, right: 5, left: -20, bottom: 55 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis
@@ -1090,15 +1107,17 @@ export default function ModelComparisonPage() {
                           angle={-25}
                           textAnchor="end"
                           interval={0}
-                          tick={{ fontSize: 10 }}
+                          tick={{ fontSize: 9 }}
+                          height={65}
                         />
                         <YAxis
                           domain={[0, 1]}
                           tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-                          tick={{ fontSize: 10 }}
+                          tick={{ fontSize: 9 }}
+                          width={42}
                         />
                         <Tooltip content={<ChartTooltip />} />
-                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        <Legend wrapperStyle={{ fontSize: 10 }} />
                         <Bar
                           dataKey="train"
                           name="Training accuracy"
@@ -1121,13 +1140,13 @@ export default function ModelComparisonPage() {
             {/* Classification evaluation */}
 
             {run.task === "classification" && (
-              <div>
+              <div className="min-w-0">
                 <SectionHeading
                   title="Classification evaluation"
                   description="Detailed test-set classification diagnostics."
                 />
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="grid min-w-0 grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2">
 
                   <ChartCard
                     title="Confusion matrix"
@@ -1145,17 +1164,18 @@ export default function ModelComparisonPage() {
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={classMetricData}
-                          margin={{ top: 10, right: 10, left: -15, bottom: 5 }}
+                          margin={{ top: 10, right: 5, left: -20, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="className" tick={{ fontSize: 11 }} />
+                          <XAxis dataKey="className" tick={{ fontSize: 9 }} />
                           <YAxis
                             domain={[0, 1]}
                             tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-                            tick={{ fontSize: 10 }}
+                            tick={{ fontSize: 9 }}
+                            width={42}
                           />
                           <Tooltip content={<ChartTooltip />} />
-                          <Legend wrapperStyle={{ fontSize: 11 }} />
+                          <Legend wrapperStyle={{ fontSize: 10 }} />
                           <Bar dataKey="precision" name="Precision" fill="#3b82f6" />
                           <Bar dataKey="recall" name="Recall" fill="#f97316" />
                           <Bar dataKey="f1" name="F1-score" fill="#14b8a6" />
@@ -1168,14 +1188,14 @@ export default function ModelComparisonPage() {
                 </div>
 
                 {evaluation?.classification_report && (
-                  <Card className="p-5 mt-4">
+                  <Card className="mt-3 min-w-0 p-3 sm:mt-4 sm:p-5">
                     <SectionHeading
                       title="Classification report"
                       description="Per-class test-set metrics and sample counts."
                     />
 
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[550px] text-xs text-left">
+                    <div className="w-full overflow-x-auto overscroll-x-contain">
+                      <table className="w-full min-w-[550px] text-left text-xs">
                         <thead>
                           <tr className="border-b border-border text-ink-secondary">
                             <th className="py-3 pr-4">Class</th>
@@ -1226,7 +1246,7 @@ export default function ModelComparisonPage() {
 
             {/* Model leaderboard */}
 
-            <Card className="p-5">
+            <Card className="min-w-0 p-3 sm:p-5">
               <SectionHeading
                 title="Model leaderboard"
                 description="Models ranked by the AutoML selection process."
@@ -1238,8 +1258,8 @@ export default function ModelComparisonPage() {
               />
 
               {leaderboard.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <div className="relative flex-1">
+                <div className="mb-4 flex min-w-0 flex-col gap-3 sm:flex-row">
+                  <div className="relative min-w-0 flex-1">
                     <Search
                       size={14}
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-secondary"
@@ -1249,14 +1269,14 @@ export default function ModelComparisonPage() {
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       placeholder="Search models..."
-                      className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-transparent text-xs text-ink outline-none focus:border-orange"
+                      className="min-h-10 w-full rounded-lg border border-border bg-transparent py-2 pl-9 pr-3 text-xs text-ink outline-none focus:border-orange"
                     />
                   </div>
 
                   <select
                     value={sortBy}
                     onChange={(event) => setSortBy(event.target.value)}
-                    className="px-3 py-2 rounded-lg border border-border bg-surface text-xs text-ink outline-none"
+                    className="min-h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-xs text-ink outline-none sm:w-auto sm:min-w-[220px]"
                   >
                     <option value="rank">Original ranking</option>
                     <option value="cv">CV score: highest first</option>
@@ -1267,16 +1287,16 @@ export default function ModelComparisonPage() {
               )}
 
               {leaderboard.length === 0 ? (
-                <p className="text-xs text-ink-secondary py-6 text-center">
+                <p className="py-6 text-center text-xs text-ink-secondary">
                   No leaderboard data is available.
                 </p>
               ) : filteredLeaderboard.length === 0 ? (
-                <p className="text-xs text-ink-secondary py-6 text-center">
+                <p className="py-6 text-center text-xs text-ink-secondary">
                   No models match your search.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs min-w-[850px]">
+                <div className="w-full overflow-x-auto overscroll-x-contain">
+                  <table className="w-full min-w-[850px] text-left text-xs">
                     <thead>
                       <tr className="border-b border-border text-ink-secondary">
                         <th className="py-3 pr-4">Rank</th>
@@ -1307,9 +1327,9 @@ export default function ModelComparisonPage() {
                         return (
                           <tr
                             key={row.algorithm || index}
-                            className={`border-b border-border last:border-0 ${
+                            className={`border-b border-border ${
                               isSelected ? "bg-orange/[0.04]" : ""
-                            }`}
+                            } last:border-0`}
                           >
                             <td className="py-3 pr-4 font-medium text-ink">
                               #{row.rank ?? index + 1}
@@ -1320,7 +1340,7 @@ export default function ModelComparisonPage() {
                                 {row.algorithm || "Unknown"}
                               </div>
 
-                              <div className="flex flex-wrap gap-1 mt-1">
+                              <div className="mt-1 flex flex-wrap gap-1">
                                 {isSelected && (
                                   <span className="text-[9px] text-green-600">
                                     Selected model
@@ -1347,7 +1367,7 @@ export default function ModelComparisonPage() {
 
                             <td className="py-3 pr-4 text-ink">
                               {formatMetric(cvScore, primaryMetric)}
-                              <span className="block text-[10px] text-ink-secondary mt-1">
+                              <span className="mt-1 block text-[10px] text-ink-secondary">
                                 ± {formatMetric(cvStd, primaryMetric)}
                               </span>
                             </td>
@@ -1390,24 +1410,24 @@ export default function ModelComparisonPage() {
 
             {/* Selected model test evaluation */}
 
-            <Card className="p-5">
+            <Card className="min-w-0 p-3 sm:p-5">
               <SectionHeading
                 title="Selected model test evaluation"
                 description={`Held-out test metrics for ${bestRow?.algorithm || bestModel}.`}
               />
 
               {bestRow?.test ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
                   {Object.entries(bestRow.test).map(([metric, value]) => (
                     <div
                       key={metric}
-                      className="rounded-lg border border-border p-3"
+                      className="min-w-0 rounded-lg border border-border p-3"
                     >
-                      <p className="text-xs text-ink-secondary">
+                      <p className="break-words text-xs text-ink-secondary">
                         {formatLabel(metric)}
                       </p>
 
-                      <p className="text-lg font-semibold text-ink mt-2">
+                      <p className="mt-2 break-words text-base font-semibold text-ink sm:text-lg">
                         {formatMetric(value, metric)}
                       </p>
                     </div>
@@ -1422,7 +1442,7 @@ export default function ModelComparisonPage() {
 
             {/* Diagnostics */}
 
-            <Card className="p-5">
+            <Card className="min-w-0 p-3 sm:p-5">
               <SectionHeading
                 title="Training diagnostics"
                 description="Warnings and observations reported by the training pipeline."
@@ -1433,23 +1453,23 @@ export default function ModelComparisonPage() {
                   {warnings.map((warning, index) => (
                     <div
                       key={index}
-                      className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3"
+                      className="flex min-w-0 items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3"
                     >
                       <AlertTriangle
                         size={16}
-                        className="text-amber-500 mt-0.5 shrink-0"
+                        className="mt-0.5 shrink-0 text-amber-500"
                       />
 
-                      <p className="text-xs text-ink-secondary leading-relaxed">
+                      <p className="min-w-0 break-words text-xs leading-relaxed text-ink-secondary">
                         {warning}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-xs text-ink-secondary">
-                  <CheckCircle2 size={16} className="text-green-600" />
-                  No training warnings were reported.
+                <div className="flex items-start gap-2 text-xs text-ink-secondary">
+                  <CheckCircle2 size={16} className="shrink-0 text-green-600" />
+                  <span>No training warnings were reported.</span>
                 </div>
               )}
 
@@ -1463,16 +1483,16 @@ export default function ModelComparisonPage() {
                     {diagnosticData.map((item) => (
                       <div
                         key={item.model}
-                        className="flex flex-wrap justify-between gap-2 text-xs"
+                        className="flex min-w-0 flex-col justify-between gap-1 text-xs sm:flex-row sm:flex-wrap sm:gap-2"
                       >
-                        <span className="text-ink-secondary">
+                        <span className="break-words text-ink-secondary">
                           {item.model}
                         </span>
 
                         <span
                           className={
                             item.warning
-                              ? "text-amber-600 font-medium"
+                              ? "font-medium text-amber-600"
                               : "text-ink"
                           }
                         >
@@ -1486,12 +1506,12 @@ export default function ModelComparisonPage() {
               )}
 
               {bestRow && bestTestRow && (
-                <div className="mt-4 p-3 rounded-lg bg-surface-secondary">
+                <div className="mt-4 rounded-lg bg-surface-secondary p-3">
                   <p className="text-xs font-semibold text-ink">
                     How to interpret these results
                   </p>
 
-                  <p className="text-xs text-ink-secondary mt-2 leading-relaxed">
+                  <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
                     The selected model is chosen using cross-validation
                     performance. The highest test-scoring model is shown
                     separately. A higher test score does not automatically
@@ -1505,7 +1525,7 @@ export default function ModelComparisonPage() {
 
             {/* Artifacts */}
 
-            <Card className="p-5">
+            <Card className="min-w-0 p-3 sm:p-5">
               <SectionHeading
                 title="Training artifacts"
                 description="Files generated during this training run."
@@ -1523,8 +1543,8 @@ export default function ModelComparisonPage() {
               ) : (
                 <div className="space-y-5">
                   {Object.entries(artifactGroups).map(([group, files]) => (
-                    <div key={group}>
-                      <h3 className="text-xs font-semibold text-ink mb-2">
+                    <div key={group} className="min-w-0">
+                      <h3 className="mb-2 text-xs font-semibold text-ink">
                         {group}
                       </h3>
 
@@ -1535,22 +1555,22 @@ export default function ModelComparisonPage() {
                           return (
                             <div
                               key={artifact}
-                              className="flex flex-wrap items-center justify-between gap-3 border border-border rounded-lg p-3"
+                              className="flex min-w-0 flex-col items-stretch justify-between gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center"
                             >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="p-2 rounded-lg bg-surface-secondary">
+                              <div className="flex min-w-0 items-start gap-3">
+                                <div className="shrink-0 rounded-lg bg-surface-secondary p-2">
                                   <Icon
                                     size={17}
                                     className="text-ink-secondary"
                                   />
                                 </div>
 
-                                <div className="min-w-0">
-                                  <p className="text-xs font-medium text-ink break-all">
+                                <div className="min-w-0 flex-1">
+                                  <p className="break-all text-xs font-medium text-ink">
                                     {artifact.split("/").pop()}
                                   </p>
 
-                                  <p className="text-[10px] text-ink-secondary mt-1 break-all">
+                                  <p className="mt-1 break-all text-[10px] text-ink-secondary">
                                     {artifact}
                                   </p>
                                 </div>
@@ -1559,7 +1579,7 @@ export default function ModelComparisonPage() {
                               <button
                                 onClick={() => handleDownload(artifact)}
                                 disabled={downloading === artifact}
-                                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-xs text-ink hover:bg-surface-secondary disabled:opacity-50 shrink-0"
+                                className="flex min-h-10 w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-xs text-ink hover:bg-surface-secondary disabled:opacity-50 sm:w-auto"
                               >
                                 {downloading === artifact ? (
                                   <RefreshCw
@@ -1587,7 +1607,7 @@ export default function ModelComparisonPage() {
         )}
 
         {error && run && (
-          <p className="text-xs text-red-500">{error}</p>
+          <p className="break-words text-xs text-red-500">{error}</p>
         )}
       </div>
     </AppShell>

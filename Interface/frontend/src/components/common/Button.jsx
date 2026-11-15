@@ -1,3 +1,4 @@
+
 const VARIANTS = {
   primary:
     "bg-orange text-white hover:bg-orange-light shadow-sm",
@@ -8,9 +9,9 @@ const VARIANTS = {
 };
 
 const SIZES = {
-  sm: "text-xs px-3 py-1.5 gap-1.5",
-  md: "text-sm px-4 py-2 gap-2",
-  lg: "text-sm px-5 py-2.5 gap-2",
+  sm: "text-xs px-3 py-2 sm:py-1.5 gap-1.5",
+  md: "text-sm px-4 py-2.5 sm:py-2 gap-2",
+  lg: "text-sm px-5 py-3 sm:py-2.5 gap-2",
 };
 
 export default function Button({
@@ -28,12 +29,18 @@ export default function Button({
     <button
       type={type}
       disabled={disabled}
-      className={`inline-flex items-center justify-center font-medium rounded-lg transition-default disabled:opacity-50 disabled:cursor-not-allowed ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex max-w-full items-center justify-center gap-2 rounded-lg font-medium transition-default disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...props}
     >
-      {Icon && iconPosition === "left" && <Icon size={16} />}
+      {Icon && iconPosition === "left" && (
+        <Icon size={16} className="shrink-0" />
+      )}
+
       {children}
-      {Icon && iconPosition === "right" && <Icon size={16} />}
+
+      {Icon && iconPosition === "right" && (
+        <Icon size={16} className="shrink-0" />
+      )}
     </button>
   );
 }

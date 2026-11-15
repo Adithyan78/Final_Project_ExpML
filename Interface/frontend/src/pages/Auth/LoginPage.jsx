@@ -34,29 +34,32 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-page flex">
+    <div className="flex min-h-screen w-full bg-surface-page">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-white border-r border-surface-border flex-col justify-between p-12">
+      <div className="hidden w-1/2 flex-col justify-between border-r border-surface-border bg-white p-8 lg:flex xl:p-12">
         <Link to={ROUTES.HOME} className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-orange flex items-center justify-center">
-            <Boxes size={16} className="text-white" strokeWidth={2.25} />
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-orange">
+            <Boxes size={17} className="text-white" strokeWidth={2.25} />
           </div>
-          <span className="text-[15px] font-semibold text-ink tracking-tight">
+          <span className="text-[15px] font-semibold tracking-tight text-ink">
             AutoExplainAI
           </span>
         </Link>
 
-        <div className="max-w-sm">
-          <h2 className="text-2xl font-semibold text-ink tracking-tight leading-snug">
+        <div className="w-full max-w-md">
+          <h2 className="text-2xl font-semibold leading-snug tracking-tight text-ink xl:text-3xl">
             Explainable AutoML for tabular classification
           </h2>
-          <div className="mt-8 space-y-4">
+
+          <div className="mt-7 space-y-4 xl:mt-8">
             {POINTS.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
-                  <Icon size={15} className="text-orange" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-50">
+                  <Icon size={16} className="text-orange" />
                 </div>
-                <span className="text-sm text-ink-secondary">{text}</span>
+                <span className="text-sm leading-relaxed text-ink-secondary">
+                  {text}
+                </span>
               </div>
             ))}
           </div>
@@ -68,27 +71,27 @@ export default function LoginPage() {
       </div>
 
       {/* Right auth card */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
-            <div className="w-7 h-7 rounded-md bg-orange flex items-center justify-center">
-              <Boxes size={16} className="text-white" strokeWidth={2.25} />
+      <div className="flex min-w-0 flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-10 lg:px-8 xl:px-12">
+        <div className="w-full max-w-sm min-w-0">
+          <div className="mb-7 flex items-center justify-center gap-2 lg:hidden sm:mb-8">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-orange">
+              <Boxes size={17} className="text-white" strokeWidth={2.25} />
             </div>
             <span className="text-[15px] font-semibold text-ink">
               AutoExplainAI
             </span>
           </div>
 
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
             Welcome back
           </h1>
-          <p className="text-sm text-ink-secondary mt-1.5">
+          <p className="mt-1.5 text-xs leading-relaxed text-ink-secondary sm:text-sm">
             Sign in to continue to your workspace.
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4 sm:mt-8">
             <div>
-              <label className="block text-xs font-medium text-ink mb-1.5">
+              <label className="mb-1.5 block text-xs font-medium text-ink">
                 Email
               </label>
               <input
@@ -99,17 +102,18 @@ export default function LoginPage() {
                   setForm({ ...form, email: e.target.value })
                 }
                 placeholder="you@company.com"
-                className="w-full text-sm px-3.5 py-2.5 rounded-lg border border-surface-border bg-white text-ink placeholder:text-ink-muted outline-none focus:border-orange focus:ring-1 focus:ring-orange transition-default"
+                className="w-full rounded-lg border border-surface-border bg-white px-3.5 py-3 text-sm text-ink outline-none transition-default placeholder:text-ink-muted focus:border-orange focus:ring-1 focus:ring-orange sm:py-2.5"
               />
             </div>
+
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
                 <label className="block text-xs font-medium text-ink">
                   Password
                 </label>
                 <a
                   href="#"
-                  className="text-xs text-orange hover:text-orange-light"
+                  className="shrink-0 text-xs text-orange hover:text-orange-light"
                 >
                   Forgot password?
                 </a>
@@ -122,19 +126,19 @@ export default function LoginPage() {
                   setForm({ ...form, password: e.target.value })
                 }
                 placeholder="••••••••"
-                className="w-full text-sm px-3.5 py-2.5 rounded-lg border border-surface-border bg-white text-ink placeholder:text-ink-muted outline-none focus:border-orange focus:ring-1 focus:ring-orange transition-default"
+                className="w-full rounded-lg border border-surface-border bg-white px-3.5 py-3 text-sm text-ink outline-none transition-default placeholder:text-ink-muted focus:border-orange focus:ring-1 focus:ring-orange sm:py-2.5"
               />
             </div>
 
             {error && (
-              <p role="alert" className="text-sm text-red-600">
+              <p role="alert" className="break-words text-sm text-red-600">
                 {error}
               </p>
             )}
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full justify-center"
               size="lg"
               disabled={loading}
             >
@@ -142,11 +146,11 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-sm text-ink-secondary text-center mt-6">
+          <p className="mt-6 text-center text-xs leading-relaxed text-ink-secondary sm:text-sm">
             Don&apos;t have an account?{" "}
             <Link
               to={ROUTES.SIGNUP}
-              className="text-orange font-medium hover:text-orange-light"
+              className="font-medium text-orange hover:text-orange-light"
             >
               Create account
             </Link>

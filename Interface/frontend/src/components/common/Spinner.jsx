@@ -1,11 +1,13 @@
+
 export default function Spinner({ size = 16, className = "" }) {
   return (
     <svg
-      className={`animate-spin ${className}`}
+      className={`animate-spin shrink-0 ${className}`}
       width={size}
       height={size}
       viewBox="0 0 24 24"
       fill="none"
+      aria-hidden="true"
     >
       <circle
         cx="12"

@@ -44,8 +44,8 @@ export default function SignupPage() {
   };
 
   const field = (key, label, type = "text", placeholder = "") => (
-    <div>
-      <label className="block text-xs font-medium text-ink mb-1.5">
+    <div className="min-w-0">
+      <label className="mb-1.5 block text-xs font-medium text-ink">
         {label}
       </label>
       <input
@@ -56,50 +56,50 @@ export default function SignupPage() {
         value={form[key]}
         onChange={(e) => setForm({ ...form, [key]: e.target.value })}
         placeholder={placeholder}
-        className="w-full text-sm px-3.5 py-2.5 rounded-lg border border-surface-border bg-white text-ink placeholder:text-ink-muted outline-none focus:border-orange focus:ring-1 focus:ring-orange transition-default"
+        className="w-full rounded-lg border border-surface-border bg-white px-3.5 py-3 text-sm text-ink outline-none transition-default placeholder:text-ink-muted focus:border-orange focus:ring-1 focus:ring-orange sm:py-2.5"
       />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-surface-page flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
+    <div className="flex min-h-screen w-full items-center justify-center bg-surface-page px-4 py-6 sm:px-6 sm:py-10">
+      <div className="w-full max-w-sm min-w-0">
         <Link
           to={ROUTES.HOME}
-          className="flex items-center gap-2 mb-8 justify-center"
+          className="mb-6 flex items-center justify-center gap-2 sm:mb-8"
         >
-          <div className="w-7 h-7 rounded-md bg-orange flex items-center justify-center">
-            <Boxes size={16} className="text-white" strokeWidth={2.25} />
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-orange">
+            <Boxes size={17} className="text-white" strokeWidth={2.25} />
           </div>
           <span className="text-[15px] font-semibold text-ink">
             AutoExplainAI
           </span>
         </Link>
 
-        <div className="bg-white border border-surface-border rounded-card shadow-card p-7">
-          <h1 className="text-2xl font-semibold text-ink tracking-tight">
+        <div className="rounded-card border border-surface-border bg-white p-5 shadow-card sm:p-7">
+          <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">
             Create your account
           </h1>
-          <p className="text-sm text-ink-secondary mt-1.5 leading-relaxed">
+          <p className="mt-1.5 text-xs leading-relaxed text-ink-secondary sm:text-sm">
             Create your workspace and start your first explainable ML
             experiment.
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4 sm:mt-6">
             {field("name", "Name", "text", "Ada Lovelace")}
             {field("email", "Email", "email", "you@company.com")}
             {field("password", "Password", "password", "••••••••")}
             {field("confirm", "Confirm Password", "password", "••••••••")}
 
             {error && (
-              <p role="alert" className="text-sm text-red-600">
+              <p role="alert" className="break-words text-sm text-red-600">
                 {error}
               </p>
             )}
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full justify-center"
               size="lg"
               disabled={loading}
             >
@@ -108,11 +108,11 @@ export default function SignupPage() {
           </form>
         </div>
 
-        <p className="text-sm text-ink-secondary text-center mt-6">
+        <p className="mt-5 text-center text-xs leading-relaxed text-ink-secondary sm:mt-6 sm:text-sm">
           Already have an account?{" "}
           <Link
             to={ROUTES.LOGIN}
-            className="text-orange font-medium hover:text-orange-light"
+            className="font-medium text-orange hover:text-orange-light"
           >
             Sign in
           </Link>
